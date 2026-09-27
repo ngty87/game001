@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>コインキャッチゲーム</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1e293b;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      touch-action: none;
+    }
+    h1 { margin: 8px 0; font-size: 20px; }
+    #score-board { margin-bottom: 8px; font-size: 18px; }
+    canvas {
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      border-radius: 8px;
+      max-width: 95vw;
+      max-height: 70vh;
+    }
+    .guide { margin-top: 8px; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>コインキャッチ！</h1>
+  <div id="score-board">スコア: <span id="score">0</span></div>
+  <canvas id="gameCanvas" width="400" height="500"></canvas>
+  <div class="guide">PC: 左右キー / スマホ: 画面タッチ・左右ドラッグ</div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+
+    let score = 0;
+    let gameOver = false;
+
+    // プレイヤー設定
+    const player = {
+      x: canvas.width / 2 - 25,
+      y: canvas.height - 40,
+      width: 50,
+      height: 20,
+      speed: 7,
+      dx: 0
+    };
+
+    // アイテム（コイン・障害物）
+    const items = [];
+    let frame = 0;
+
+    function spawnItem() {
+      const isBomb = Math.random() < 0.25; // 25%で爆弾
+      items.push({
+        x: Math.random() * (canvas.width - 20),
+        y: -20,
+        size: 12,
+        speed: 3 + Math.random() * 2,
+        isBomb: isBomb
+      });
+    }
+
+    // キーボード操作
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'Left') player.dx = -player.speed;
+      if (e.key === 'ArrowRight' || e.key === 'Right') player.dx = player.speed;
+      if (gameOver && e.key === ' ') resetGame();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (['ArrowLeft', 'ArrowRight', 'Left', 'Right'].includes(e.key)) player.dx = 0;
+    });
+
+    // スマホ・マウス操作
+    function handlePointer(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const x = (clientX - rect.left) * scaleX;
+      player.x = Math.max(0, Math.min(canvas.width - player.width, x - player.width / 2));
+    }
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      handlePointer(e.touches[0].clientX);
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (gameOver) { resetGame(); return; }
+      handlePointer(e.touches[0].clientX);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (e.buttons === 1) handlePointer(e.clientX);
+    });
+
+    function resetGame() {
+      score = 0;
+      scoreEl.textContent = score;
+      items.length = 0;
+      gameOver = false;
+      player.x = canvas.width / 2 - player.width / 2;
+      loop();
+    }
+
+    function loop() {
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ゲームオーバー！', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('タップまたはスペースキーで再開', canvas.width / 2, canvas.height / 2 + 25);
+        return;
+      }
+
+      // 更新
+      player.x += player.dx;
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+      frame++;
+      if (frame % 30 === 0) spawnItem();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // プレイヤー描画
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // アイテム処理
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        item.y += item.speed;
+
+        // 描画
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
+        ctx.fillStyle = item.isBomb ? '#ef4444' : '#facc15';
+        ctx.fill();
+        ctx.closePath();
+
+        // 衝突判定
+        if (
+          item.y + item.size >= player.y &&
+          item.y - item.size <= player.y + player.height &&
+          item.x + item.size >= player.x &&
+          item.x - item.size <= player.x + player.width
+        ) {
+          if (item.isBomb) {
+            gameOver = true;
+          } else {
+            score += 10;
+            scoreEl.textContent = score;
+          }
+          items.splice(i, 1);
+          continue;
+        }
+
+        // 画面外落下
+        if (item.y > canvas.height + 20) {
+          items.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
