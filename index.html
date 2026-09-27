@@ -1,182 +1,480 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>コインキャッチゲーム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コード当てクイズ (Chord Guessing Game)</title>
   <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #22c55e;
+      --error: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 0;
-      background: #1e293b;
-      color: #fff;
+      padding: 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      font-family: sans-serif;
-      touch-action: none;
     }
-    h1 { margin: 8px 0; font-size: 20px; }
-    #score-board { margin-bottom: 8px; font-size: 18px; }
-    canvas {
+    .container {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      border: 1px solid #334155;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 16px 0;
+      text-align: center;
+      color: var(--accent);
+    }
+    .mode-select {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .mode-select label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    select {
       background: #0f172a;
-      border: 2px solid #38bdf8;
-      border-radius: 8px;
-      max-width: 95vw;
-      max-height: 70vh;
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
     }
-    .guide { margin-top: 8px; font-size: 12px; color: #94a3b8; }
+    .score-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 6px;
+    }
+    .play-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-sound {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #0f172a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-sound:hover { background: var(--accent-hover); color: #fff; }
+    .btn-sound:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .question-panel {
+      margin-top: 10px;
+    }
+    .group-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 12px 0 6px 0;
+    }
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px;
+    }
+    .btn-choice {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: var(--text);
+      padding: 12px 8px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-choice:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #1e293b;
+    }
+    .btn-choice.selected {
+      border-color: var(--accent);
+      background: #0369a1;
+      color: #fff;
+    }
+    .btn-choice.correct {
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      color: #fff !important;
+    }
+    .btn-choice.incorrect {
+      background: var(--error) !important;
+      border-color: var(--error) !important;
+      color: #fff !important;
+    }
+
+    .feedback-area {
+      min-height: 48px;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .feedback-success { color: var(--success); }
+    .feedback-error { color: var(--error); }
+    .next-btn {
+      margin-top: 10px;
+      padding: 8px 18px;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 6px;
+      background: #475569;
+      color: #fff;
+      cursor: pointer;
+    }
+    .next-btn:hover { background: #64748b; }
   </style>
 </head>
 <body>
-  <h1>コインキャッチ！</h1>
-  <div id="score-board">スコア: <span id="score">0</span></div>
-  <canvas id="gameCanvas" width="400" height="500"></canvas>
-  <div class="guide">PC: 左右キー / スマホ: 画面タッチ・左右ドラッグ</div>
+  <div class="container">
+    <h1>コード当てクイズ</h1>
+
+    <div class="mode-select">
+      <label for="mode">出題モードを選択：</label>
+      <select id="mode">
+        <option value="level1">Lv.1 基本3和音 (Maj, min, dim)</option>
+        <option value="level2">Lv.2 応用 (7, M7, m7, mM7, aug, sus4)</option>
+        <option value="level3">Lv.3 完全マスター (ルート音 + コード品質)</option>
+      </select>
+    </div>
+
+    <div class="score-bar">
+      <span>問題: <strong id="question-count">1</strong> / 10</span>
+      <span>正解数: <strong id="correct-count">0</strong></span>
+    </div>
+
+    <div class="play-controls">
+      <button id="btn-play-chord" class="btn-sound">🔊 和音を鳴らす</button>
+      <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオで鳴らす</button>
+    </div>
+
+    <div class="question-panel" id="question-panel">
+      <!-- 選択肢ボタンが動的に挿入されます -->
+    </div>
+
+    <div class="feedback-area" id="feedback-area"></div>
+  </div>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
+    // --- 音楽データ定義 ---
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const BASE_PITCH = 48; // C3 (約130.81Hz)
 
-    let score = 0;
-    let gameOver = false;
-
-    // プレイヤー設定
-    const player = {
-      x: canvas.width / 2 - 25,
-      y: canvas.height - 40,
-      width: 50,
-      height: 20,
-      speed: 7,
-      dx: 0
+    const CHORD_DEFS = {
+      // Lv.1
+      'major': { label: 'Major', intervals: [0, 4, 7], level: 1 },
+      'minor': { label: 'minor (m)', intervals: [0, 3, 7], level: 1 },
+      'dim': { label: 'diminished (dim)', intervals: [0, 3, 6], level: 1 },
+      // Lv.2
+      '7': { label: '7 (ドミナント7th)', intervals: [0, 4, 7, 10], level: 2 },
+      'maj7': { label: 'M7 (メジャー7th)', intervals: [0, 4, 7, 11], level: 2 },
+      'm7': { label: 'm7 (マイナー7th)', intervals: [0, 3, 7, 10], level: 2 },
+      'mM7': { label: 'mM7 (マイナーメジャー7th)', intervals: [0, 3, 7, 11], level: 2 },
+      'aug': { label: 'aug (オーギュメント)', intervals: [0, 4, 8], level: 2 },
+      'sus4': { label: 'sus4', intervals: [0, 5, 7], level: 2 }
     };
 
-    // アイテム（コイン・障害物）
-    const items = [];
-    let frame = 0;
+    // --- Web Audio API 合成エンジン ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
 
-    function spawnItem() {
-      const isBomb = Math.random() < 0.25; // 25%で爆弾
-      items.push({
-        x: Math.random() * (canvas.width - 20),
-        y: -20,
-        size: 12,
-        speed: 3 + Math.random() * 2,
-        isBomb: isBomb
+    function midiToFreq(midiNote) {
+      return 440 * Math.pow(2, (midiNote - 69) / 12);
+    }
+
+    function playTone(freq, startTime, duration = 1.2) {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      // ピアノ・エレクトリックピアノ風の倍音を含めるため三角波を使用
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      // エンベロープ設定（減衰音）
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function playChord(midiNotes, arpeggio = false) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime + 0.05;
+      midiNotes.forEach((note, idx) => {
+        const start = arpeggio ? now + (idx * 0.18) : now;
+        const dur = arpeggio ? 1.0 : 1.5;
+        playTone(midiToFreq(note), start, dur);
       });
     }
 
-    // キーボード操作
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'Left') player.dx = -player.speed;
-      if (e.key === 'ArrowRight' || e.key === 'Right') player.dx = player.speed;
-      if (gameOver && e.key === ' ') resetGame();
+    // --- ゲーム状態管理 ---
+    let currentMode = 'level1';
+    let questionIndex = 1;
+    let correctCount = 0;
+    const totalQuestions = 10;
+    let currentQuestion = null;
+    let answered = false;
+
+    // Lv3用の選択状態
+    let selectedRoot = null;
+    let selectedType = null;
+
+    const modeSelect = document.getElementById('mode');
+    const questionPanel = document.getElementById('question-panel');
+    const feedbackArea = document.getElementById('feedback-area');
+    const questionCountEl = document.getElementById('question-count');
+    const correctCountEl = document.getElementById('correct-count');
+    const btnPlayChord = document.getElementById('btn-play-chord');
+    const btnPlayArpeggio = document.getElementById('btn-play-arpeggio');
+
+    modeSelect.addEventListener('change', () => {
+      currentMode = modeSelect.value;
+      resetGame();
     });
 
-    window.addEventListener('keyup', (e) => {
-      if (['ArrowLeft', 'ArrowRight', 'Left', 'Right'].includes(e.key)) player.dx = 0;
+    btnPlayChord.addEventListener('click', () => {
+      if (currentQuestion) playChord(currentQuestion.midiNotes, false);
     });
 
-    // スマホ・マウス操作
-    function handlePointer(clientX) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const x = (clientX - rect.left) * scaleX;
-      player.x = Math.max(0, Math.min(canvas.width - player.width, x - player.width / 2));
-    }
-
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      handlePointer(e.touches[0].clientX);
-    }, { passive: false });
-
-    canvas.addEventListener('touchstart', (e) => {
-      if (gameOver) { resetGame(); return; }
-      handlePointer(e.touches[0].clientX);
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-      if (e.buttons === 1) handlePointer(e.clientX);
+    btnPlayArpeggio.addEventListener('click', () => {
+      if (currentQuestion) playChord(currentQuestion.midiNotes, true);
     });
 
     function resetGame() {
-      score = 0;
-      scoreEl.textContent = score;
-      items.length = 0;
-      gameOver = false;
-      player.x = canvas.width / 2 - player.width / 2;
-      loop();
+      questionIndex = 1;
+      correctCount = 0;
+      questionCountEl.textContent = questionIndex;
+      correctCountEl.textContent = correctCount;
+      generateQuestion();
     }
 
-    function loop() {
-      if (gameOver) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ef4444';
-        ctx.font = '24px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('ゲームオーバー！', canvas.width / 2, canvas.height / 2 - 10);
-        ctx.fillStyle = '#fff';
-        ctx.font = '16px sans-serif';
-        ctx.fillText('タップまたはスペースキーで再開', canvas.width / 2, canvas.height / 2 + 25);
-        return;
+    function generateQuestion() {
+      answered = false;
+      selectedRoot = null;
+      selectedType = null;
+      feedbackArea.innerHTML = '';
+      questionCountEl.textContent = questionIndex;
+
+      // 対象コードタイプの抽出
+      let candidateKeys = [];
+      if (currentMode === 'level1') {
+        candidateKeys = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 1);
+      } else if (currentMode === 'level2') {
+        candidateKeys = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
+      } else {
+        // level3: 全て
+        candidateKeys = Object.keys(CHORD_DEFS);
       }
 
-      // 更新
-      player.x += player.dx;
-      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+      const randomTypeKey = candidateKeys[Math.floor(Math.random() * candidateKeys.length)];
+      const chordDef = CHORD_DEFS[randomTypeKey];
 
-      frame++;
-      if (frame % 30 === 0) spawnItem();
+      // ルート音の決定（Lv.1, Lv.2は聴き取りやすいようC3固定、Lv.3はランダム）
+      const rootIndex = (currentMode === 'level3') ? Math.floor(Math.random() * 12) : 0;
+      const rootNoteName = NOTE_NAMES[rootIndex];
+      const rootMidi = BASE_PITCH + rootIndex;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const midiNotes = chordDef.intervals.map(interval => rootMidi + interval);
 
-      // プレイヤー描画
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+      currentQuestion = {
+        typeKey: randomTypeKey,
+        typeName: chordDef.label,
+        rootName: rootNoteName,
+        midiNotes: midiNotes
+      };
 
-      // アイテム処理
-      for (let i = items.length - 1; i >= 0; i--) {
-        const item = items[i];
-        item.y += item.speed;
-
-        // 描画
-        ctx.beginPath();
-        ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
-        ctx.fillStyle = item.isBomb ? '#ef4444' : '#facc15';
-        ctx.fill();
-        ctx.closePath();
-
-        // 衝突判定
-        if (
-          item.y + item.size >= player.y &&
-          item.y - item.size <= player.y + player.height &&
-          item.x + item.size >= player.x &&
-          item.x - item.size <= player.x + player.width
-        ) {
-          if (item.isBomb) {
-            gameOver = true;
-          } else {
-            score += 10;
-            scoreEl.textContent = score;
-          }
-          items.splice(i, 1);
-          continue;
-        }
-
-        // 画面外落下
-        if (item.y > canvas.height + 20) {
-          items.splice(i, 1);
-        }
-      }
-
-      requestAnimationFrame(loop);
+      renderUI();
+      // 出題時に自動再生
+      setTimeout(() => playChord(currentQuestion.midiNotes, false), 150);
     }
 
-    loop();
+    function renderUI() {
+      questionPanel.innerHTML = '';
+
+      if (currentMode === 'level1' || currentMode === 'level2') {
+        const grid = document.createElement('div');
+        grid.className = 'choices-grid';
+
+        const keys = (currentMode === 'level1')
+          ? Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 1)
+          : Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
+
+        keys.forEach(k => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = CHORD_DEFS[k].label;
+          btn.onclick = () => checkAnswerDirect(k, btn);
+          grid.appendChild(btn);
+        });
+
+        questionPanel.appendChild(grid);
+      } else {
+        // Lv.3: ルート音 + コードタイプ選択
+        const rootTitle = document.createElement('div');
+        rootTitle.className = 'group-title';
+        rootTitle.textContent = '1. ルート音を選択:';
+        questionPanel.appendChild(rootTitle);
+
+        const rootGrid = document.createElement('div');
+        rootGrid.className = 'choices-grid';
+        NOTE_NAMES.forEach(note => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = note;
+          btn.onclick = () => {
+            if (answered) return;
+            rootGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedRoot = note;
+            checkLv3Ready();
+          };
+          rootGrid.appendChild(btn);
+        });
+        questionPanel.appendChild(rootGrid);
+
+        const typeTitle = document.createElement('div');
+        typeTitle.className = 'group-title';
+        typeTitle.textContent = '2. コードの響きを選択:';
+        questionPanel.appendChild(typeTitle);
+
+        const typeGrid = document.createElement('div');
+        typeGrid.className = 'choices-grid';
+        Object.keys(CHORD_DEFS).forEach(k => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = CHORD_DEFS[k].label;
+          btn.onclick = () => {
+            if (answered) return;
+            typeGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedType = k;
+            checkLv3Ready();
+          };
+          typeGrid.appendChild(btn);
+        });
+        questionPanel.appendChild(typeGrid);
+      }
+    }
+
+    // Lv1 & Lv2 の判定
+    function checkAnswerDirect(selectedKey, btn) {
+      if (answered) return;
+      answered = true;
+
+      const isCorrect = (selectedKey === currentQuestion.typeKey);
+      if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
+        correctCountEl.textContent = correctCount;
+        showFeedback(true, `正解！ (${currentQuestion.typeName})`);
+      } else {
+        btn.classList.add('incorrect');
+        // 正解のボタンをハイライト
+        const allBtns = questionPanel.querySelectorAll('.btn-choice');
+        allBtns.forEach(b => {
+          if (b.textContent === currentQuestion.typeName) b.classList.add('correct');
+        });
+        showFeedback(false, `残念！ 正解は「${currentQuestion.typeName}」でした`);
+      }
+    }
+
+    // Lv3 の判定
+    function checkLv3Ready() {
+      if (selectedRoot && selectedType && !answered) {
+        answered = true;
+        const isCorrect = (selectedRoot === currentQuestion.rootName && selectedType === currentQuestion.typeKey);
+        const fullChordName = `${currentQuestion.rootName} ${currentQuestion.typeName}`;
+
+        if (isCorrect) {
+          correctCount++;
+          correctCountEl.textContent = correctCount;
+          showFeedback(true, `完全正解！ 正解は「${fullChordName}」です！`);
+        } else {
+          showFeedback(false, `不正解！ 正解は「${fullChordName}」でした（あなたの回答: ${selectedRoot} ${CHORD_DEFS[selectedType].label}）`);
+        }
+      }
+    }
+
+    function showFeedback(isSuccess, message) {
+      feedbackArea.innerHTML = `
+        <div class="${isSuccess ? 'feedback-success' : 'feedback-error'}">${message}</div>
+        <button class="next-btn" id="btn-next">${questionIndex < totalQuestions ? '次の問題へ' : '結果を見る'}</button>
+      `;
+      document.getElementById('btn-next').onclick = () => {
+        if (questionIndex < totalQuestions) {
+          questionIndex++;
+          generateQuestion();
+        } else {
+          showFinalResult();
+        }
+      };
+    }
+
+    function showFinalResult() {
+      questionPanel.innerHTML = '';
+      feedbackArea.innerHTML = `
+        <div style="font-size:1.2rem; margin-bottom:12px;">🎉 終了！ 成績: ${correctCount} / ${totalQuestions} 問正解</div>
+        <button class="btn-sound" style="margin: 0 auto; max-width:200px;" onclick="resetGame()">もう一度遊ぶ</button>
+      `;
+    }
+
+    // 初回起動
+    generateQuestion();
   </script>
 </body>
 </html>
