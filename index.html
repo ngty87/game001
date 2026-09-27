@@ -30,7 +30,7 @@
     }
     .container {
       width: 100%;
-      max-width: 560px;
+      max-width: 600px;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 24px;
@@ -43,23 +43,31 @@
       text-align: center;
       color: var(--accent);
     }
-    .mode-select {
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 480px) {
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+    .control-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
     }
-    .mode-select label {
-      font-size: 0.85rem;
+    .control-group label {
+      font-size: 0.8rem;
       color: var(--text-muted);
     }
     select {
       background: #0f172a;
       color: var(--text);
       border: 1px solid #475569;
-      padding: 10px;
+      padding: 9px;
       border-radius: 6px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       width: 100%;
       outline: none;
     }
@@ -67,10 +75,34 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 16px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       background: #0f172a;
-      padding: 10px 14px;
+      padding: 8px 14px;
       border-radius: 6px;
+    }
+    .octave-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .btn-oct {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-oct.active {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      border-color: var(--accent);
     }
     .play-controls {
       display: flex;
@@ -79,8 +111,8 @@
     }
     .btn-sound {
       flex: 1;
-      padding: 14px;
-      font-size: 1rem;
+      padding: 12px;
+      font-size: 0.95rem;
       font-weight: 600;
       border: none;
       border-radius: 8px;
@@ -91,14 +123,10 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: background 0.2s;
+      transition: background 0.15s;
     }
     .btn-sound:hover { background: var(--accent-hover); color: #fff; }
-    .btn-sound:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .question-panel {
-      margin-top: 10px;
-    }
     .group-title {
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -106,16 +134,16 @@
     }
     .choices-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
       gap: 8px;
     }
     .btn-choice {
       background: #0f172a;
       border: 1px solid #475569;
       color: var(--text);
-      padding: 12px 8px;
+      padding: 10px 6px;
       border-radius: 6px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
@@ -141,13 +169,13 @@
     }
 
     .feedback-area {
-      min-height: 48px;
+      min-height: 52px;
       margin-top: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
       text-align: center;
     }
@@ -155,8 +183,8 @@
     .feedback-error { color: var(--error); }
     .next-btn {
       margin-top: 10px;
-      padding: 8px 18px;
-      font-size: 0.95rem;
+      padding: 8px 20px;
+      font-size: 0.9rem;
       border: none;
       border-radius: 6px;
       background: #475569;
@@ -170,13 +198,30 @@
   <div class="container">
     <h1>コード当てクイズ</h1>
 
-    <div class="mode-select">
-      <label for="mode">出題モードを選択：</label>
-      <select id="mode">
-        <option value="level1">Lv.1 基本3和音 (Maj, min, dim)</option>
-        <option value="level2">Lv.2 応用 (7, M7, m7, mM7, aug, sus4)</option>
-        <option value="level3">Lv.3 完全マスター (ルート音 + コード品質)</option>
-      </select>
+    <div class="settings-grid">
+      <div class="control-group">
+        <label for="mode">出題レベル：</label>
+        <select id="mode">
+          <option value="level1">Lv.1 基本2種 (Maj, min / 白鍵ランダム)</option>
+          <option value="level2">Lv.2 応用6種 (7, M7, m7, mM7, aug, sus4)</option>
+          <option value="level3">Lv.3 完全当て (ルート白鍵 + 全種)</option>
+          <option value="level4">Lv.4 完全マスター (全12キー + 全種)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="timbre">音色 (楽器)：</label>
+        <select id="timbre">
+          <option value="piano">アコースティックピアノ風</option>
+          <option value="organ">オルガン風 (豊かな倍音・持続音)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="octave-selector">
+      <span>オクターブ設定:</span>
+      <button class="btn-oct" data-oct="-12">-1 Oct (低音)</button>
+      <button class="btn-oct active" data-oct="0">通常 (基準)</button>
+      <button class="btn-oct" data-oct="12">+1 Oct (高音)</button>
     </div>
 
     <div class="score-bar">
@@ -189,34 +234,38 @@
       <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオで鳴らす</button>
     </div>
 
-    <div class="question-panel" id="question-panel">
-      <!-- 選択肢ボタンが動的に挿入されます -->
-    </div>
-
+    <div class="question-panel" id="question-panel"></div>
     <div class="feedback-area" id="feedback-area"></div>
   </div>
 
   <script>
-    // --- 音楽データ定義 ---
-    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const BASE_PITCH = 48; // C3 (約130.81Hz)
+    // --- 音階・コード定義 ---
+    const NATURAL_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
+    // 各ルートのC3(48)からの半音オフセット
+    const NOTE_OFFSETS = {
+      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    };
 
     const CHORD_DEFS = {
-      // Lv.1
+      // Lv.1（ディミニッシュは除外）
       'major': { label: 'Major', intervals: [0, 4, 7], level: 1 },
       'minor': { label: 'minor (m)', intervals: [0, 3, 7], level: 1 },
-      'dim': { label: 'diminished (dim)', intervals: [0, 3, 6], level: 1 },
       // Lv.2
-      '7': { label: '7 (ドミナント7th)', intervals: [0, 4, 7, 10], level: 2 },
+      '7': { label: '7 (ドミナント)', intervals: [0, 4, 7, 10], level: 2 },
       'maj7': { label: 'M7 (メジャー7th)', intervals: [0, 4, 7, 11], level: 2 },
       'm7': { label: 'm7 (マイナー7th)', intervals: [0, 3, 7, 10], level: 2 },
-      'mM7': { label: 'mM7 (マイナーメジャー7th)', intervals: [0, 3, 7, 11], level: 2 },
+      'mM7': { label: 'mM7 (マイナーM7th)', intervals: [0, 3, 7, 11], level: 2 },
       'aug': { label: 'aug (オーギュメント)', intervals: [0, 4, 8], level: 2 },
       'sus4': { label: 'sus4', intervals: [0, 5, 7], level: 2 }
     };
 
-    // --- Web Audio API 合成エンジン ---
+    // --- 音声合成エンジン (Web Audio API) ---
     let audioCtx = null;
+    let octaveOffset = 0; // -12, 0, 12
+
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -231,34 +280,83 @@
       return 440 * Math.pow(2, (midiNote - 69) / 12);
     }
 
-    function playTone(freq, startTime, duration = 1.2) {
+    // ピアノ風合成音（基音 + 第2・第3倍音 + 指数減衰）
+    function playPianoTone(freq, startTime, duration = 1.6) {
       const ctx = getAudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const partials = [
+        { mult: 1, gain: 0.22, decay: duration },
+        { mult: 2, gain: 0.10, decay: duration * 0.7 },
+        { mult: 3, gain: 0.05, decay: duration * 0.5 }
+      ];
 
-      // ピアノ・エレクトリックピアノ風の倍音を含めるため三角波を使用
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, startTime);
+      partials.forEach(p => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq * p.mult, startTime);
 
-      // エンベロープ設定（減衰音）
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + p.decay);
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-      osc.start(startTime);
-      osc.stop(startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + p.decay);
+      });
+    }
+
+    // オルガン風合成音（加算合成 + 持続性）
+    function playOrganTone(freq, startTime, duration = 1.3) {
+      const ctx = getAudioContext();
+      // オルガンのドローバー風倍音比率
+      const harmonics = [
+        { mult: 0.5, gain: 0.08 }, // 16'
+        { mult: 1.0, gain: 0.18 }, // 8' (基音)
+        { mult: 2.0, gain: 0.12 }, // 4'
+        { mult: 3.0, gain: 0.07 }  // 2 2/3'
+      ];
+
+      harmonics.forEach(h => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq * h.mult, startTime);
+
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(h.gain, startTime + 0.04);
+        gain.gain.setValueAtTime(h.gain, startTime + duration - 0.1);
+        gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
+    }
+
+    function playNote(freq, startTime, duration) {
+      const timbre = document.getElementById('timbre').value;
+      if (timbre === 'organ') {
+        playOrganTone(freq, startTime, duration);
+      } else {
+        playPianoTone(freq, startTime, duration);
+      }
     }
 
     function playChord(midiNotes, arpeggio = false) {
       const ctx = getAudioContext();
-      const now = ctx.currentTime + 0.05;
+      const now = ctx.currentTime + 0.03;
+      const timbre = document.getElementById('timbre').value;
+      const baseDuration = (timbre === 'organ') ? 1.4 : 1.7;
+
       midiNotes.forEach((note, idx) => {
-        const start = arpeggio ? now + (idx * 0.18) : now;
-        const dur = arpeggio ? 1.0 : 1.5;
-        playTone(midiToFreq(note), start, dur);
+        const shiftedNote = note + octaveOffset;
+        const start = arpeggio ? now + (idx * 0.16) : now;
+        const dur = arpeggio ? 1.0 : baseDuration;
+        playNote(midiToFreq(shiftedNote), start, dur);
       });
     }
 
@@ -270,7 +368,6 @@
     let currentQuestion = null;
     let answered = false;
 
-    // Lv3用の選択状態
     let selectedRoot = null;
     let selectedType = null;
 
@@ -281,6 +378,18 @@
     const correctCountEl = document.getElementById('correct-count');
     const btnPlayChord = document.getElementById('btn-play-chord');
     const btnPlayArpeggio = document.getElementById('btn-play-arpeggio');
+
+    // オクターブボタンの設定
+    document.querySelectorAll('.btn-oct').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-oct').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        octaveOffset = parseInt(btn.dataset.oct, 10);
+        if (currentQuestion && !answered) {
+          playChord(currentQuestion.midiNotes, false);
+        }
+      });
+    });
 
     modeSelect.addEventListener('change', () => {
       currentMode = modeSelect.value;
@@ -310,26 +419,29 @@
       feedbackArea.innerHTML = '';
       questionCountEl.textContent = questionIndex;
 
-      // 対象コードタイプの抽出
-      let candidateKeys = [];
+      // 1. コード品質の候補決定
+      let candidateTypes = [];
       if (currentMode === 'level1') {
-        candidateKeys = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 1);
+        candidateTypes = ['major', 'minor'];
       } else if (currentMode === 'level2') {
-        candidateKeys = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
+        candidateTypes = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
       } else {
-        // level3: 全て
-        candidateKeys = Object.keys(CHORD_DEFS);
+        // Lv.3 & Lv.4: Lv1とLv2の全種
+        candidateTypes = Object.keys(CHORD_DEFS);
       }
 
-      const randomTypeKey = candidateKeys[Math.floor(Math.random() * candidateKeys.length)];
+      const randomTypeKey = candidateTypes[Math.floor(Math.random() * candidateTypes.length)];
       const chordDef = CHORD_DEFS[randomTypeKey];
 
-      // ルート音の決定（Lv.1, Lv.2は聴き取りやすいようC3固定、Lv.3はランダム）
-      const rootIndex = (currentMode === 'level3') ? Math.floor(Math.random() * 12) : 0;
-      const rootNoteName = NOTE_NAMES[rootIndex];
-      const rootMidi = BASE_PITCH + rootIndex;
+      // 2. ルート音の決定
+      let rootPool = NATURAL_NOTES; // 基本は白鍵 (C, D, E, F, G, A, B)
+      if (currentMode === 'level4') {
+        rootPool = ALL_NOTES; // 全12音
+      }
 
-      const midiNotes = chordDef.intervals.map(interval => rootMidi + interval);
+      const rootNoteName = rootPool[Math.floor(Math.random() * rootPool.length)];
+      const baseMidi = 48 + NOTE_OFFSETS[rootNoteName]; // C3基準
+      const midiNotes = chordDef.intervals.map(intv => baseMidi + intv);
 
       currentQuestion = {
         typeKey: randomTypeKey,
@@ -339,7 +451,6 @@
       };
 
       renderUI();
-      // 出題時に自動再生
       setTimeout(() => playChord(currentQuestion.midiNotes, false), 150);
     }
 
@@ -351,7 +462,7 @@
         grid.className = 'choices-grid';
 
         const keys = (currentMode === 'level1')
-          ? Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 1)
+          ? ['major', 'minor']
           : Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
 
         keys.forEach(k => {
@@ -364,15 +475,17 @@
 
         questionPanel.appendChild(grid);
       } else {
-        // Lv.3: ルート音 + コードタイプ選択
+        // Lv.3 / Lv.4: ルート音 + コード品質の2段階選択
         const rootTitle = document.createElement('div');
         rootTitle.className = 'group-title';
-        rootTitle.textContent = '1. ルート音を選択:';
+        rootTitle.textContent = '1. ルート音（基音）を選択:';
         questionPanel.appendChild(rootTitle);
 
         const rootGrid = document.createElement('div');
         rootGrid.className = 'choices-grid';
-        NOTE_NAMES.forEach(note => {
+        const rootsToDisplay = (currentMode === 'level3') ? NATURAL_NOTES : ALL_NOTES;
+
+        rootsToDisplay.forEach(note => {
           const btn = document.createElement('button');
           btn.className = 'btn-choice';
           btn.textContent = note;
@@ -381,7 +494,7 @@
             rootGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedRoot = note;
-            checkLv3Ready();
+            checkFullAnswer();
           };
           rootGrid.appendChild(btn);
         });
@@ -403,7 +516,7 @@
             typeGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedType = k;
-            checkLv3Ready();
+            checkFullAnswer();
           };
           typeGrid.appendChild(btn);
         });
@@ -411,7 +524,7 @@
       }
     }
 
-    // Lv1 & Lv2 の判定
+    // Lv1 & Lv2 の回答判定
     function checkAnswerDirect(selectedKey, btn) {
       if (answered) return;
       answered = true;
@@ -421,20 +534,19 @@
         btn.classList.add('correct');
         correctCount++;
         correctCountEl.textContent = correctCount;
-        showFeedback(true, `正解！ (${currentQuestion.typeName})`);
+        showFeedback(true, `正解！ (${currentQuestion.rootName} ${currentQuestion.typeName})`);
       } else {
         btn.classList.add('incorrect');
-        // 正解のボタンをハイライト
         const allBtns = questionPanel.querySelectorAll('.btn-choice');
         allBtns.forEach(b => {
           if (b.textContent === currentQuestion.typeName) b.classList.add('correct');
         });
-        showFeedback(false, `残念！ 正解は「${currentQuestion.typeName}」でした`);
+        showFeedback(false, `残念！ 正解は「${currentQuestion.rootName} ${currentQuestion.typeName}」でした`);
       }
     }
 
-    // Lv3 の判定
-    function checkLv3Ready() {
+    // Lv3 & Lv4 の回答判定
+    function checkFullAnswer() {
       if (selectedRoot && selectedType && !answered) {
         answered = true;
         const isCorrect = (selectedRoot === currentQuestion.rootName && selectedType === currentQuestion.typeKey);
@@ -443,7 +555,7 @@
         if (isCorrect) {
           correctCount++;
           correctCountEl.textContent = correctCount;
-          showFeedback(true, `完全正解！ 正解は「${fullChordName}」です！`);
+          showFeedback(true, `完全正解！ 「${fullChordName}」です！`);
         } else {
           showFeedback(false, `不正解！ 正解は「${fullChordName}」でした（あなたの回答: ${selectedRoot} ${CHORD_DEFS[selectedType].label}）`);
         }
