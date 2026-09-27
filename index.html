@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>コード当てクイズ (Chord Guessing Game)</title>
+  <title>コード＆音感 トレーニング</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -30,7 +30,7 @@
     }
     .container {
       width: 100%;
-      max-width: 620px;
+      max-width: 640px;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 24px;
@@ -47,15 +47,15 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
-    @media (max-width: 480px) {
+    @media (max-width: 500px) {
       .settings-grid { grid-template-columns: 1fr; }
     }
     .control-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
     .control-group label {
       font-size: 0.8rem;
@@ -65,12 +65,35 @@
       background: #0f172a;
       color: var(--text);
       border: 1px solid #475569;
-      padding: 9px;
+      padding: 8px;
       border-radius: 6px;
       font-size: 0.9rem;
       width: 100%;
       outline: none;
     }
+
+    /* サブ設定エリア（カスタムチェックボックス等） */
+    .sub-settings {
+      background: #0b1120;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      border: 1px dashed #334155;
+      font-size: 0.85rem;
+    }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
     .octave-selector {
       display: flex;
       align-items: center;
@@ -95,15 +118,19 @@
       font-weight: bold;
       border-color: var(--accent);
     }
+
     .score-bar {
       display: flex;
       justify-content: space-between;
       margin-bottom: 16px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       background: #0f172a;
       padding: 8px 14px;
       border-radius: 6px;
+      color: var(--text-muted);
     }
+    .score-bar strong { color: var(--text); }
+
     .play-controls {
       display: flex;
       gap: 10px;
@@ -134,14 +161,14 @@
     }
     .choices-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
       gap: 8px;
     }
     .btn-choice {
       background: #0f172a;
       border: 1px solid #475569;
       color: var(--text);
-      padding: 10px 6px;
+      padding: 10px 4px;
       border-radius: 6px;
       font-size: 0.92rem;
       font-weight: 500;
@@ -183,7 +210,7 @@
     .feedback-error { color: var(--error); }
     .next-btn {
       margin-top: 10px;
-      padding: 8px 20px;
+      padding: 8px 24px;
       font-size: 0.9rem;
       border: none;
       border-radius: 6px;
@@ -192,20 +219,42 @@
       cursor: pointer;
     }
     .next-btn:hover { background: #64748b; }
+
+    .weakness-stats {
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #334155;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-reset-stats {
+      background: transparent;
+      border: 1px solid #64748b;
+      color: #94a3b8;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .btn-reset-stats:hover { color: #fff; border-color: #ef4444; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>コード当てクイズ</h1>
+    <h1>コード＆音感 トレーニング</h1>
 
     <div class="settings-grid">
       <div class="control-group">
-        <label for="mode">出題レベル：</label>
+        <label for="mode">出題モード：</label>
         <select id="mode">
-          <option value="level1">Lv.1 基本2種 (Maj, min / 白鍵ランダム)</option>
-          <option value="level2">Lv.2 応用7種 (dim, 7, M7, m7, mM7, aug, sus4)</option>
-          <option value="level3">Lv.3 完全当て (ルート白鍵 + 全9種)</option>
-          <option value="level4">Lv.4 完全マスター (全12キー + 全9種)</option>
+          <option value="single_root">🎯 単音ルート当て (単音の音感)</option>
+          <option value="chord_type">🎼 コード種類特化 (響きをピックアップ)</option>
+          <option value="weakness">🔥 苦手集中モード (間違えた問題を優先)</option>
+          <option value="full_natural">Lv.3 完全当て (ルート白鍵 + 全コード)</option>
+          <option value="full_all">Lv.4 完全マスター (全12キー + 全コード)</option>
         </select>
       </div>
       <div class="control-group">
@@ -219,6 +268,22 @@
       </div>
     </div>
 
+    <!-- 単音モード用設定 -->
+    <div id="single-root-settings" class="sub-settings" style="display:none;">
+      <strong>ルート音の範囲:</strong>
+      <div style="display:flex; gap:16px; margin-top:6px;">
+        <label><input type="radio" name="root_range" value="white" checked> 白鍵のみ (C〜B)</label>
+        <label><input type="radio" name="root_range" value="black"> 黒鍵のみ (#系)</label>
+        <label><input type="radio" name="root_range" value="all"> 両方 (全12音)</label>
+      </div>
+    </div>
+
+    <!-- コード種類モード用設定 -->
+    <div id="chord-pick-settings" class="sub-settings" style="display:none;">
+      <strong>出題するコードを選択（複数可）:</strong>
+      <div class="checkbox-grid" id="chord-checkboxes"></div>
+    </div>
+
     <div class="octave-selector">
       <span>オクターブ設定:</span>
       <button class="btn-oct" data-oct="-12">-1 Oct (低音)</button>
@@ -227,22 +292,29 @@
     </div>
 
     <div class="score-bar">
-      <span>問題: <strong id="question-count">1</strong> / 10</span>
-      <span>正解数: <strong id="correct-count">0</strong></span>
+      <span>出題数: <strong id="question-count">0</strong></span>
+      <span>正解: <strong id="correct-count">0</strong></span>
+      <span>正答率: <strong id="accuracy">0%</strong></span>
     </div>
 
     <div class="play-controls">
-      <button id="btn-play-chord" class="btn-sound">🔊 和音を鳴らす</button>
-      <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオで鳴らす</button>
+      <button id="btn-play-chord" class="btn-sound">🔊 再生する</button>
+      <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオ</button>
     </div>
 
     <div class="question-panel" id="question-panel"></div>
     <div class="feedback-area" id="feedback-area"></div>
+
+    <div class="weakness-stats">
+      <span id="weakness-summary">苦手データ: 0 問蓄積</span>
+      <button class="btn-reset-stats" id="btn-reset-weakness">蓄積データをリセット</button>
+    </div>
   </div>
 
   <script>
-    // --- 音階・コード定義 ---
-    const NATURAL_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    // --- 音楽データ定義 ---
+    const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const BLACK_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#'];
     const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
     const NOTE_OFFSETS = {
@@ -251,18 +323,42 @@
     };
 
     const CHORD_DEFS = {
-      // Lv.1
-      'major': { label: 'Major', intervals: [0, 4, 7], level: 1 },
-      'minor': { label: 'minor (m)', intervals: [0, 3, 7], level: 1 },
-      // Lv.2
-      'dim':   { label: 'diminished (dim)', intervals: [0, 3, 6], level: 2 },
-      '7':     { label: '7 (ドミナント)', intervals: [0, 4, 7, 10], level: 2 },
-      'maj7':  { label: 'M7 (メジャー7th)', intervals: [0, 4, 7, 11], level: 2 },
-      'm7':    { label: 'm7 (マイナー7th)', intervals: [0, 3, 7, 10], level: 2 },
-      'mM7':   { label: 'mM7 (マイナーM7th)', intervals: [0, 3, 7, 11], level: 2 },
-      'aug':   { label: 'aug (オーギュメント)', intervals: [0, 4, 8], level: 2 },
-      'sus4':  { label: 'sus4', intervals: [0, 5, 7], level: 2 }
+      'major': { label: 'Major', intervals: [0, 4, 7] },
+      'minor': { label: 'minor (m)', intervals: [0, 3, 7] },
+      'dim':   { label: 'diminished (dim)', intervals: [0, 3, 6] },
+      '7':     { label: '7 (ドミナント)', intervals: [0, 4, 7, 10] },
+      'maj7':  { label: 'M7 (メジャー7th)', intervals: [0, 4, 7, 11] },
+      'm7':    { label: 'm7 (マイナー7th)', intervals: [0, 3, 7, 10] },
+      'mM7':   { label: 'mM7 (マイナーM7th)', intervals: [0, 3, 7, 11] },
+      'aug':   { label: 'aug (オーギュメント)', intervals: [0, 4, 8] },
+      'sus4':  { label: 'sus4', intervals: [0, 5, 7] }
     };
+
+    // --- 苦手データ管理 (localStorage) ---
+    // key: "chord_major", "root_C#" などの形式で { attempts, errors } を保存
+    const STATS_KEY = 'chord_trainer_weakness_v1';
+    function loadStats() {
+      try {
+        return JSON.parse(localStorage.getItem(STATS_KEY)) || {};
+      } catch(e) { return {}; }
+    }
+    function saveStats(stats) {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+      updateWeaknessSummary();
+    }
+    function recordAnswer(key, isCorrect) {
+      const stats = loadStats();
+      if (!stats[key]) stats[key] = { attempts: 0, errors: 0 };
+      stats[key].attempts++;
+      if (!isCorrect) stats[key].errors++;
+      saveStats(stats);
+    }
+    function updateWeaknessSummary() {
+      const stats = loadStats();
+      let totalErrors = 0;
+      Object.keys(stats).forEach(k => totalErrors += stats[k].errors || 0);
+      document.getElementById('weakness-summary').textContent = `苦手データ: 間違い蓄積 ${totalErrors} 回`;
+    }
 
     // --- Web Audio API 合成エンジン ---
     let audioCtx = null;
@@ -273,8 +369,6 @@
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        // 音割れ（クリッピング）を防ぐコンプレッサー/リミッター回路
         compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-12, audioCtx.currentTime);
         compressor.knee.setValueAtTime(8, audioCtx.currentTime);
@@ -298,273 +392,358 @@
       return 440 * Math.pow(2, (midiNote - 69) / 12);
     }
 
-    // 1. ピアノ風
     function playPianoTone(freq, startTime, duration = 1.6) {
       const ctx = getAudioContext();
-      const partials = [
-        { mult: 1, gain: 0.18, decay: duration },
-        { mult: 2, gain: 0.08, decay: duration * 0.7 },
-        { mult: 3, gain: 0.04, decay: duration * 0.5 }
-      ];
-
-      partials.forEach(p => {
+      [{ mult: 1, gain: 0.18, decay: duration }, { mult: 2, gain: 0.08, decay: duration * 0.7 }, { mult: 3, gain: 0.04, decay: duration * 0.5 }].forEach(p => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq * p.mult, startTime);
-
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + p.decay);
-
         osc.connect(gain);
         gain.connect(compressor);
-
         osc.start(startTime);
         osc.stop(startTime + p.decay);
       });
     }
 
-    // 2. エレクトリックピアノ風（Rhodes系ベルトーン）
     function playEpianoTone(freq, startTime, duration = 1.8) {
       const ctx = getAudioContext();
       const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
       const gain1 = ctx.createGain();
-      const gain2 = ctx.createGain();
-
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(freq, startTime);
       gain1.gain.setValueAtTime(0, startTime);
       gain1.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
       gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
-      // わずかな倍音（キラッとしたアタック音）
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
       osc2.type = 'triangle';
       osc2.frequency.setValueAtTime(freq * 3, startTime);
       gain2.gain.setValueAtTime(0, startTime);
       gain2.gain.linearRampToValueAtTime(0.05, startTime + 0.01);
       gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.35);
 
-      osc1.connect(gain1);
-      osc2.connect(gain2);
-      gain1.connect(compressor);
-      gain2.connect(compressor);
-
-      osc1.start(startTime);
-      osc2.start(startTime);
-      osc1.stop(startTime + duration);
-      osc2.stop(startTime + duration);
+      osc1.connect(gain1); osc2.connect(gain2);
+      gain1.connect(compressor); gain2.connect(compressor);
+      osc1.start(startTime); osc2.start(startTime);
+      osc1.stop(startTime + duration); osc2.stop(startTime + duration);
     }
 
-    // 3. ソフトシンセパッド風（丸いフィルター持続音）
     function playPadTone(freq, startTime, duration = 1.5) {
       const ctx = getAudioContext();
       const osc = ctx.createOscillator();
       const filter = ctx.createBiquadFilter();
       const gain = ctx.createGain();
-
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, startTime);
-
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(900, startTime);
-
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.15); // ゆっくり立ち上がる
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
       gain.gain.setValueAtTime(0.12, startTime + duration - 0.2);
       gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(compressor);
-
-      osc.start(startTime);
-      osc.stop(startTime + duration);
+      osc.connect(filter); filter.connect(gain); gain.connect(compressor);
+      osc.start(startTime); osc.stop(startTime + duration);
     }
 
-    // 4. クリーンオルガン風（音割れ対策済み加算合成）
     function playOrganTone(freq, startTime, duration = 1.3) {
       const ctx = getAudioContext();
-      const harmonics = [
-        { mult: 0.5, gain: 0.04 },
-        { mult: 1.0, gain: 0.12 },
-        { mult: 2.0, gain: 0.06 },
-        { mult: 3.0, gain: 0.03 }
-      ];
-
-      harmonics.forEach(h => {
+      [{ mult: 0.5, gain: 0.04 }, { mult: 1.0, gain: 0.12 }, { mult: 2.0, gain: 0.06 }, { mult: 3.0, gain: 0.03 }].forEach(h => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq * h.mult, startTime);
-
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(h.gain, startTime + 0.04);
         gain.gain.setValueAtTime(h.gain, startTime + duration - 0.1);
         gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
-
-        osc.connect(gain);
-        gain.connect(compressor);
-
-        osc.start(startTime);
-        osc.stop(startTime + duration);
+        osc.connect(gain); gain.connect(compressor);
+        osc.start(startTime); osc.stop(startTime + duration);
       });
     }
 
     function playNote(freq, startTime, duration) {
       const timbre = document.getElementById('timbre').value;
-      if (timbre === 'epiano') {
-        playEpianoTone(freq, startTime, duration);
-      } else if (timbre === 'pad') {
-        playPadTone(freq, startTime, duration);
-      } else if (timbre === 'organ') {
-        playOrganTone(freq, startTime, duration);
-      } else {
-        playPianoTone(freq, startTime, duration);
-      }
+      if (timbre === 'epiano') playEpianoTone(freq, startTime, duration);
+      else if (timbre === 'pad') playPadTone(freq, startTime, duration);
+      else if (timbre === 'organ') playOrganTone(freq, startTime, duration);
+      else playPianoTone(freq, startTime, duration);
     }
 
-    function playChord(midiNotes, arpeggio = false) {
+    function playSoundSequence(midiNotes, arpeggio = false) {
       const ctx = getAudioContext();
       const now = ctx.currentTime + 0.03;
       const timbre = document.getElementById('timbre').value;
-      const baseDuration = (timbre === 'organ' || timbre === 'pad') ? 1.4 : 1.7;
+      const baseDuration = (timbre === 'organ' || timbre === 'pad') ? 1.3 : 1.6;
 
       midiNotes.forEach((note, idx) => {
         const shiftedNote = note + octaveOffset;
         const start = arpeggio ? now + (idx * 0.16) : now;
-        const dur = arpeggio ? 1.0 : baseDuration;
+        const dur = arpeggio ? 0.9 : baseDuration;
         playNote(midiToFreq(shiftedNote), start, dur);
       });
     }
 
-    // --- ゲーム状態管理 ---
-    let currentMode = 'level1';
-    let questionIndex = 1;
+    // --- ゲーム状態 ---
+    let totalQuestions = 0;
     let correctCount = 0;
-    const totalQuestions = 10;
     let currentQuestion = null;
     let answered = false;
 
     let selectedRoot = null;
     let selectedType = null;
 
+    // ピックアップ対象のコード（デフォルトは全選択）
+    let activePickedChords = Object.keys(CHORD_DEFS);
+
+    // DOM要素
     const modeSelect = document.getElementById('mode');
     const questionPanel = document.getElementById('question-panel');
     const feedbackArea = document.getElementById('feedback-area');
     const questionCountEl = document.getElementById('question-count');
     const correctCountEl = document.getElementById('correct-count');
+    const accuracyEl = document.getElementById('accuracy');
     const btnPlayChord = document.getElementById('btn-play-chord');
     const btnPlayArpeggio = document.getElementById('btn-play-arpeggio');
 
-    // オクターブ設定
+    const singleRootSettings = document.getElementById('single-root-settings');
+    const chordPickSettings = document.getElementById('chord-pick-settings');
+    const chordCheckboxesEl = document.getElementById('chord-checkboxes');
+
+    // チェックボックスUIの初期構築
+    Object.keys(CHORD_DEFS).forEach(k => {
+      const label = document.createElement('label');
+      label.className = 'checkbox-item';
+      label.innerHTML = `<input type="checkbox" value="${k}" checked> ${CHORD_DEFS[k].label}`;
+      label.querySelector('input').addEventListener('change', () => {
+        const checked = Array.from(chordCheckboxesEl.querySelectorAll('input:checked')).map(el => el.value);
+        if (checked.length === 0) {
+          label.querySelector('input').checked = true; // 最低1つ選択
+          return;
+        }
+        activePickedChords = checked;
+        generateQuestion();
+      });
+      chordCheckboxesEl.appendChild(label);
+    });
+
+    // オクターブ切り替え
     document.querySelectorAll('.btn-oct').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.btn-oct').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         octaveOffset = parseInt(btn.dataset.oct, 10);
-        if (currentQuestion && !answered) {
-          playChord(currentQuestion.midiNotes, false);
-        }
+        if (currentQuestion && !answered) playSoundSequence(currentQuestion.midiNotes, false);
       });
     });
 
+    // 単音モードのラジオボタン
+    document.querySelectorAll('input[name="root_range"]').forEach(radio => {
+      radio.addEventListener('change', () => generateQuestion());
+    });
+
+    // モード切替
     modeSelect.addEventListener('change', () => {
-      currentMode = modeSelect.value;
-      resetGame();
+      const mode = modeSelect.value;
+      singleRootSettings.style.display = (mode === 'single_root') ? 'block' : 'none';
+      chordPickSettings.style.display = (mode === 'chord_type') ? 'block' : 'none';
+      btnPlayArpeggio.style.display = (mode === 'single_root') ? 'none' : 'flex';
+      btnPlayChord.textContent = (mode === 'single_root') ? '🔊 単音を鳴らす' : '🔊 和音を鳴らす';
+      generateQuestion();
+    });
+
+    // リセットボタン
+    document.getElementById('btn-reset-weakness').addEventListener('click', () => {
+      if (confirm('蓄積された苦手データを消去してリセットしますか？')) {
+        saveStats({});
+        alert('リセットしました');
+        if (modeSelect.value === 'weakness') generateQuestion();
+      }
     });
 
     btnPlayChord.addEventListener('click', () => {
-      if (currentQuestion) playChord(currentQuestion.midiNotes, false);
+      if (currentQuestion) playSoundSequence(currentQuestion.midiNotes, false);
     });
-
     btnPlayArpeggio.addEventListener('click', () => {
-      if (currentQuestion) playChord(currentQuestion.midiNotes, true);
+      if (currentQuestion && modeSelect.value !== 'single_root') {
+        playSoundSequence(currentQuestion.midiNotes, true);
+      }
     });
 
-    function resetGame() {
-      questionIndex = 1;
-      correctCount = 0;
-      questionCountEl.textContent = questionIndex;
+    function updateScoreBar() {
+      questionCountEl.textContent = totalQuestions;
       correctCountEl.textContent = correctCount;
-      generateQuestion();
+      const rate = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+      accuracyEl.textContent = `${rate}%`;
     }
 
+    // --- 問題生成 ---
     function generateQuestion() {
       answered = false;
       selectedRoot = null;
       selectedType = null;
       feedbackArea.innerHTML = '';
-      questionCountEl.textContent = questionIndex;
+      const mode = modeSelect.value;
 
-      // 1. コード品質の候補決定
-      let candidateTypes = [];
-      if (currentMode === 'level1') {
-        candidateTypes = ['major', 'minor'];
-      } else if (currentMode === 'level2') {
-        candidateTypes = Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
+      let rootNoteName = 'C';
+      let typeKey = 'major';
+      let isSingleNote = false;
+
+      if (mode === 'single_root') {
+        isSingleNote = true;
+        const range = document.querySelector('input[name="root_range"]:checked').value;
+        let pool = WHITE_NOTES;
+        if (range === 'black') pool = BLACK_NOTES;
+        else if (range === 'all') pool = ALL_NOTES;
+        rootNoteName = pool[Math.floor(Math.random() * pool.length)];
+
+        currentQuestion = {
+          mode: 'single_root',
+          statKey: `root_${rootNoteName}`,
+          rootName: rootNoteName,
+          pool: pool,
+          midiNotes: [48 + NOTE_OFFSETS[rootNoteName]]
+        };
+      } else if (mode === 'chord_type') {
+        // キーは白鍵ランダム、コード種類は選択されたものから出題
+        rootNoteName = WHITE_NOTES[Math.floor(Math.random() * WHITE_NOTES.length)];
+        typeKey = activePickedChords[Math.floor(Math.random() * activePickedChords.length)];
+        const chordDef = CHORD_DEFS[typeKey];
+        const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+
+        currentQuestion = {
+          mode: 'chord_type',
+          statKey: `chord_${typeKey}`,
+          typeKey: typeKey,
+          typeName: chordDef.label,
+          rootName: rootNoteName,
+          pool: activePickedChords,
+          midiNotes: chordDef.intervals.map(i => baseMidi + i)
+        };
+      } else if (mode === 'weakness') {
+        // 間違いの多いデータを優先抽出
+        const stats = loadStats();
+        const candidateKeys = Object.keys(stats).filter(k => stats[k].errors > 0);
+
+        if (candidateKeys.length === 0) {
+          // 苦手データがない場合は通常出題
+          rootNoteName = ALL_NOTES[Math.floor(Math.random() * ALL_NOTES.length)];
+          typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
+        } else {
+          // 間違い回数で重み付け
+          let pool = [];
+          candidateKeys.forEach(k => {
+            const count = Math.min(stats[k].errors, 10);
+            for (let i = 0; i < count; i++) pool.push(k);
+          });
+          const pickedKey = pool[Math.floor(Math.random() * pool.length)];
+
+          if (pickedKey.startsWith('root_')) {
+            isSingleNote = true;
+            rootNoteName = pickedKey.replace('root_', '');
+          } else {
+            typeKey = pickedKey.replace('chord_', '');
+            rootNoteName = WHITE_NOTES[Math.floor(Math.random() * WHITE_NOTES.length)];
+          }
+        }
+
+        if (isSingleNote) {
+          currentQuestion = {
+            mode: 'single_root',
+            statKey: `root_${rootNoteName}`,
+            rootName: rootNoteName,
+            pool: ALL_NOTES,
+            midiNotes: [48 + NOTE_OFFSETS[rootNoteName]]
+          };
+        } else {
+          const chordDef = CHORD_DEFS[typeKey];
+          const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+          currentQuestion = {
+            mode: 'chord_type',
+            statKey: `chord_${typeKey}`,
+            typeKey: typeKey,
+            typeName: chordDef.label,
+            rootName: rootNoteName,
+            pool: Object.keys(CHORD_DEFS),
+            midiNotes: chordDef.intervals.map(i => baseMidi + i)
+          };
+        }
       } else {
-        // Lv.3 & Lv.4: Lv1とLv2の全種
-        candidateTypes = Object.keys(CHORD_DEFS);
+        // full_natural または full_all
+        const pool = (mode === 'full_natural') ? WHITE_NOTES : ALL_NOTES;
+        rootNoteName = pool[Math.floor(Math.random() * pool.length)];
+        typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
+        const chordDef = CHORD_DEFS[typeKey];
+        const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+
+        currentQuestion = {
+          mode: 'full',
+          statKeyChord: `chord_${typeKey}`,
+          statKeyRoot: `root_${rootNoteName}`,
+          typeKey: typeKey,
+          typeName: chordDef.label,
+          rootName: rootNoteName,
+          poolRoots: pool,
+          midiNotes: chordDef.intervals.map(i => baseMidi + i)
+        };
       }
-
-      const randomTypeKey = candidateTypes[Math.floor(Math.random() * candidateTypes.length)];
-      const chordDef = CHORD_DEFS[randomTypeKey];
-
-      // 2. ルート音の決定
-      let rootPool = NATURAL_NOTES;
-      if (currentMode === 'level4') {
-        rootPool = ALL_NOTES;
-      }
-
-      const rootNoteName = rootPool[Math.floor(Math.random() * rootPool.length)];
-      const baseMidi = 48 + NOTE_OFFSETS[rootNoteName]; // C3基準
-      const midiNotes = chordDef.intervals.map(intv => baseMidi + intv);
-
-      currentQuestion = {
-        typeKey: randomTypeKey,
-        typeName: chordDef.label,
-        rootName: rootNoteName,
-        midiNotes: midiNotes
-      };
 
       renderUI();
-      setTimeout(() => playChord(currentQuestion.midiNotes, false), 150);
+      setTimeout(() => playSoundSequence(currentQuestion.midiNotes, false), 150);
     }
 
+    // --- UI描画 ---
     function renderUI() {
       questionPanel.innerHTML = '';
 
-      if (currentMode === 'level1' || currentMode === 'level2') {
+      if (currentQuestion.mode === 'single_root') {
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = '鳴っている単音の音名を選択:';
+        questionPanel.appendChild(title);
+
         const grid = document.createElement('div');
         grid.className = 'choices-grid';
+        currentQuestion.pool.forEach(note => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = note;
+          btn.onclick = () => checkSingleRoot(note, btn);
+          grid.appendChild(btn);
+        });
+        questionPanel.appendChild(grid);
 
-        const keys = (currentMode === 'level1')
-          ? ['major', 'minor']
-          : Object.keys(CHORD_DEFS).filter(k => CHORD_DEFS[k].level === 2);
+      } else if (currentQuestion.mode === 'chord_type') {
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = 'コードの響き（種類）を選択:';
+        questionPanel.appendChild(title);
 
-        keys.forEach(k => {
+        const grid = document.createElement('div');
+        grid.className = 'choices-grid';
+        currentQuestion.pool.forEach(k => {
           const btn = document.createElement('button');
           btn.className = 'btn-choice';
           btn.textContent = CHORD_DEFS[k].label;
-          btn.onclick = () => checkAnswerDirect(k, btn);
+          btn.onclick = () => checkChordType(k, btn);
           grid.appendChild(btn);
         });
-
         questionPanel.appendChild(grid);
+
       } else {
-        // Lv.3 / Lv.4: ルート音 + コード品質の2段階選択
+        // fullモード
         const rootTitle = document.createElement('div');
         rootTitle.className = 'group-title';
-        rootTitle.textContent = '1. ルート音（基音）を選択:';
+        rootTitle.textContent = '1. ルート音を選択:';
         questionPanel.appendChild(rootTitle);
 
         const rootGrid = document.createElement('div');
         rootGrid.className = 'choices-grid';
-        const rootsToDisplay = (currentMode === 'level3') ? NATURAL_NOTES : ALL_NOTES;
-
-        rootsToDisplay.forEach(note => {
+        currentQuestion.poolRoots.forEach(note => {
           const btn = document.createElement('button');
           btn.className = 'btn-choice';
           btn.textContent = note;
@@ -603,68 +782,94 @@
       }
     }
 
-    // Lv1 & Lv2 の回答判定
-    function checkAnswerDirect(selectedKey, btn) {
+    // --- 正誤判定ロジック ---
+    function checkSingleRoot(note, btn) {
       if (answered) return;
       answered = true;
+      totalQuestions++;
 
-      const isCorrect = (selectedKey === currentQuestion.typeKey);
+      const isCorrect = (note === currentQuestion.rootName);
+      recordAnswer(currentQuestion.statKey, isCorrect);
+
       if (isCorrect) {
         btn.classList.add('correct');
         correctCount++;
-        correctCountEl.textContent = correctCount;
+        showFeedback(true, `正解！ 「${currentQuestion.rootName}」の音です`);
+      } else {
+        btn.classList.add('incorrect');
+        highlightCorrectButton(currentQuestion.rootName);
+        showFeedback(false, `残念！ 正解は「${currentQuestion.rootName}」でした`);
+      }
+      updateScoreBar();
+    }
+
+    function checkChordType(selectedKey, btn) {
+      if (answered) return;
+      answered = true;
+      totalQuestions++;
+
+      const isCorrect = (selectedKey === currentQuestion.typeKey);
+      recordAnswer(currentQuestion.statKey, isCorrect);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
         showFeedback(true, `正解！ (${currentQuestion.rootName} ${currentQuestion.typeName})`);
       } else {
         btn.classList.add('incorrect');
-        const allBtns = questionPanel.querySelectorAll('.btn-choice');
-        allBtns.forEach(b => {
-          if (b.textContent === currentQuestion.typeName) b.classList.add('correct');
-        });
+        highlightCorrectButton(currentQuestion.typeName);
         showFeedback(false, `残念！ 正解は「${currentQuestion.rootName} ${currentQuestion.typeName}」でした`);
       }
+      updateScoreBar();
     }
 
-    // Lv3 & Lv4 の回答判定
     function checkFullAnswer() {
       if (selectedRoot && selectedType && !answered) {
         answered = true;
-        const isCorrect = (selectedRoot === currentQuestion.rootName && selectedType === currentQuestion.typeKey);
-        const fullChordName = `${currentQuestion.rootName} ${currentQuestion.typeName}`;
+        totalQuestions++;
 
+        const isCorrectRoot = (selectedRoot === currentQuestion.rootName);
+        const isCorrectType = (selectedType === currentQuestion.typeKey);
+        const isCorrect = isCorrectRoot && isCorrectType;
+
+        recordAnswer(currentQuestion.statKeyRoot, isCorrectRoot);
+        recordAnswer(currentQuestion.statKeyChord, isCorrectType);
+
+        const fullName = `${currentQuestion.rootName} ${currentQuestion.typeName}`;
         if (isCorrect) {
           correctCount++;
-          correctCountEl.textContent = correctCount;
-          showFeedback(true, `完全正解！ 「${fullChordName}」です！`);
+          showFeedback(true, `完全正解！ 「${fullName}」です！`);
         } else {
-          showFeedback(false, `不正解！ 正解は「${fullChordName}」でした（回答: ${selectedRoot} ${CHORD_DEFS[selectedType].label}）`);
+          showFeedback(false, `不正解！ 正解は「${fullName}」でした（回答: ${selectedRoot} ${CHORD_DEFS[selectedType].label}）`);
         }
+        updateScoreBar();
       }
+    }
+
+    function highlightCorrectButton(text) {
+      questionPanel.querySelectorAll('.btn-choice').forEach(b => {
+        if (b.textContent === text) b.classList.add('correct');
+      });
     }
 
     function showFeedback(isSuccess, message) {
       feedbackArea.innerHTML = `
         <div class="${isSuccess ? 'feedback-success' : 'feedback-error'}">${message}</div>
-        <button class="next-btn" id="btn-next">${questionIndex < totalQuestions ? '次の問題へ' : '結果を見る'}</button>
+        <button class="next-btn" id="btn-next">次の問題へ (スペースキーでも可)</button>
       `;
-      document.getElementById('btn-next').onclick = () => {
-        if (questionIndex < totalQuestions) {
-          questionIndex++;
-          generateQuestion();
-        } else {
-          showFinalResult();
-        }
-      };
+      document.getElementById('btn-next').onclick = () => generateQuestion();
     }
 
-    function showFinalResult() {
-      questionPanel.innerHTML = '';
-      feedbackArea.innerHTML = `
-        <div style="font-size:1.2rem; margin-bottom:12px;">🎉 終了！ 成績: ${correctCount} / ${totalQuestions} 問正解</div>
-        <button class="btn-sound" style="margin: 0 auto; max-width:200px;" onclick="resetGame()">もう一度遊ぶ</button>
-      `;
-    }
+    // キーボードのスペースキーでも次へ進める快適仕様
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && answered) {
+        e.preventDefault();
+        generateQuestion();
+      }
+    });
 
-    // 初回起動
+    // 初期起動
+    updateWeaknessSummary();
     generateQuestion();
   </script>
 </body>
