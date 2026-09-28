@@ -14,6 +14,8 @@
       --error: #ef4444;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --root-highlight: #f97316;    /* ルート音: オレンジ */
+      --chord-highlight: #0284c7;   /* 構成音: ブルー */
     }
     * { box-sizing: border-box; }
     body {
@@ -194,14 +196,15 @@
       color: #fff !important;
     }
 
-    /* フリー演奏用キーボード */
+    /* 鍵盤レイアウト（正確な比率） */
     .piano-keyboard {
       position: relative;
-      height: 120px;
-      display: flex;
-      justify-content: center;
+      height: 130px;
       margin: 16px 0;
       user-select: none;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .white-keys {
       display: flex;
@@ -211,40 +214,30 @@
     .key-white {
       flex: 1;
       background: #f8fafc;
-      border: 1px solid #94a3b8;
-      border-radius: 0 0 4px 4px;
+      border-right: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding-bottom: 8px;
-      color: #334155;
-      font-weight: 600;
+      padding-bottom: 10px;
+      color: #475569;
+      font-weight: 700;
       cursor: pointer;
+      transition: background 0.1s;
     }
-    .key-white:active { background: #cbd5e1; }
-    .black-keys {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 65%;
-      display: flex;
-      pointer-events: none;
-    }
-    .key-black-slot {
-      flex: 1;
-      position: relative;
-    }
+    .key-white:last-child { border-right: none; }
+    .key-white:active { background: #e2e8f0; }
+
+    /* 黒鍵の絶対位置配置 (白鍵幅 100% / 7 ≒ 14.285%) */
     .key-black {
       position: absolute;
-      right: -14px;
-      width: 28px;
-      height: 100%;
+      top: 0;
+      width: 8.5%;
+      height: 65%;
       background: #0f172a;
       border: 1px solid #334155;
-      border-radius: 0 0 3px 3px;
+      border-radius: 0 0 4px 4px;
       z-index: 2;
-      pointer-events: auto;
       cursor: pointer;
       display: flex;
       align-items: flex-end;
@@ -252,8 +245,49 @@
       padding-bottom: 6px;
       color: #94a3b8;
       font-size: 0.75rem;
+      font-weight: bold;
+      transition: background 0.1s;
     }
     .key-black:active { background: #334155; }
+
+    /* 各黒鍵の境目（境界線 - 幅の半分） */
+    .key-black[data-note="C#"] { left: calc(14.285% * 1 - 4.25%); }
+    .key-black[data-note="D#"] { left: calc(14.285% * 2 - 4.25%); }
+    .key-black[data-note="F#"] { left: calc(14.285% * 4 - 4.25%); }
+    .key-black[data-note="G#"] { left: calc(14.285% * 5 - 4.25%); }
+    .key-black[data-note="A#"] { left: calc(14.285% * 6 - 4.25%); }
+
+    /* 鍵盤ハイライト用スタイル */
+    .key-white.hl-root {
+      background: var(--root-highlight) !important;
+      color: #fff !important;
+    }
+    .key-white.hl-chord {
+      background: var(--chord-highlight) !important;
+      color: #fff !important;
+    }
+    .key-black.hl-root {
+      background: var(--root-highlight) !important;
+      color: #fff !important;
+      border-color: #ea580c !important;
+    }
+    .key-black.hl-chord {
+      background: var(--chord-highlight) !important;
+      color: #fff !important;
+      border-color: #0284c7 !important;
+    }
+
+    .key-legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: -6px;
+      margin-bottom: 14px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .color-dot { width: 10px; height: 10px; border-radius: 50%; }
 
     .feedback-area {
       min-height: 52px;
@@ -366,7 +400,8 @@
     <!-- フリー演奏エリア -->
     <div id="free-play-area">
       <div class="group-title">ミニ鍵盤（タップして単音を再生）:</div>
-      <div class="piano-keyboard">
+      <div class="piano-keyboard" id="piano-keys">
+        <!-- 白鍵 7鍵 -->
         <div class="white-keys">
           <div class="key-white" data-note="C">C</div>
           <div class="key-white" data-note="D">D</div>
@@ -376,14 +411,17 @@
           <div class="key-white" data-note="A">A</div>
           <div class="key-white" data-note="B">B</div>
         </div>
-        <div class="black-keys">
-          <div class="key-black-slot"><div class="key-black" data-note="C#">C#</div></div>
-          <div class="key-black-slot"><div class="key-black" data-note="D#">D#</div></div>
-          <div class="key-black-slot" style="pointer-events:none;"></div> <!-- E-F 間 -->
-          <div class="key-black-slot"><div class="key-black" data-note="F#">F#</div></div>
-          <div class="key-black-slot"><div class="key-black" data-note="G#">G#</div></div>
-          <div class="key-black-slot"><div class="key-black" data-note="A#">A#</div></div>
-        </div>
+        <!-- 黒鍵 5鍵（絶対位置で配置） -->
+        <div class="key-black" data-note="C#">C#</div>
+        <div class="key-black" data-note="D#">D#</div>
+        <div class="key-black" data-note="F#">F#</div>
+        <div class="key-black" data-note="G#">G#</div>
+        <div class="key-black" data-note="A#">A#</div>
+      </div>
+
+      <div class="key-legend">
+        <div class="legend-item"><div class="color-dot" style="background:var(--root-highlight);"></div> ルート音 (基音)</div>
+        <div class="legend-item"><div class="color-dot" style="background:var(--chord-highlight);"></div> 構成音</div>
       </div>
 
       <div class="group-title">コードを選んで響きを鳴らす:</div>
@@ -580,6 +618,36 @@
       });
     }
 
+    // --- 鍵盤の光らせる処理 ---
+    let highlightTimer = null;
+    function clearKeyboardHighlights() {
+      document.querySelectorAll('#piano-keys [data-note]').forEach(el => {
+        el.classList.remove('hl-root', 'hl-chord');
+      });
+      if (highlightTimer) clearTimeout(highlightTimer);
+    }
+
+    function highlightKeys(rootName, chordNotes, duration = 1400) {
+      clearKeyboardHighlights();
+
+      // ルート音
+      const rootKey = document.querySelector(`#piano-keys [data-note="${rootName}"]`);
+      if (rootKey) rootKey.classList.add('hl-root');
+
+      // 構成音（ルート音以外）
+      chordNotes.forEach(note => {
+        if (note !== rootName) {
+          const key = document.querySelector(`#piano-keys [data-note="${note}"]`);
+          if (key) key.classList.add('hl-chord');
+        }
+      });
+
+      highlightTimer = setTimeout(() => {
+        clearKeyboardHighlights();
+      }, duration);
+    }
+
+    // --- ゲーム状態 ---
     let totalQuestions = 0;
     let correctCount = 0;
     let currentQuestion = null;
@@ -604,12 +672,13 @@
     const chordPickSettings = document.getElementById('chord-pick-settings');
     const chordCheckboxesEl = document.getElementById('chord-checkboxes');
 
-    // 鍵盤クリックイベント
-    document.querySelectorAll('.key-white, .key-black').forEach(keyEl => {
+    // 鍵盤クリックイベント（単音発音 ＋ 単音ハイライト）
+    document.querySelectorAll('#piano-keys [data-note]').forEach(keyEl => {
       keyEl.addEventListener('click', () => {
         const noteName = keyEl.dataset.note;
         if (noteName) {
           const midi = 48 + NOTE_OFFSETS[noteName];
+          highlightKeys(noteName, [noteName], 600);
           playSoundSequence([midi], false);
         }
       });
@@ -626,9 +695,14 @@
     function playSelectedFreeChord(arpeggio) {
       const root = document.getElementById('free-root-select').value;
       const type = document.getElementById('free-type-select').value;
-      const baseMidi = 48 + NOTE_OFFSETS[root];
+      const baseOffset = NOTE_OFFSETS[root];
       const intervals = CHORD_DEFS[type].intervals;
-      const midiNotes = intervals.map(i => baseMidi + i);
+
+      const midiNotes = intervals.map(i => 48 + baseOffset + i);
+      // 1オクターブ内の音名に変換
+      const chordNoteNames = intervals.map(i => ALL_NOTES[(baseOffset + i) % 12]);
+
+      highlightKeys(root, chordNoteNames, arpeggio ? 1800 : 1400);
       playSoundSequence(midiNotes, arpeggio);
     }
 
@@ -678,6 +752,8 @@
       chordPickSettings.style.display = (mode === 'chord_type') ? 'block' : 'none';
       btnPlayArpeggio.style.display = (mode === 'single_root') ? 'none' : 'flex';
       btnPlayChord.textContent = (mode === 'single_root') ? '🔊 単音を鳴らす' : '🔊 和音を鳴らす';
+
+      clearKeyboardHighlights();
 
       if (!isFree) {
         generateQuestion();
