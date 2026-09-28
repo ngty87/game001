@@ -72,7 +72,6 @@
       outline: none;
     }
 
-    /* サブ設定エリア（カスタムチェックボックス等） */
     .sub-settings {
       background: #0b1120;
       padding: 12px;
@@ -195,6 +194,67 @@
       color: #fff !important;
     }
 
+    /* フリー演奏用キーボード */
+    .piano-keyboard {
+      position: relative;
+      height: 120px;
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      user-select: none;
+    }
+    .white-keys {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+    .key-white {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #94a3b8;
+      border-radius: 0 0 4px 4px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      color: #334155;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .key-white:active { background: #cbd5e1; }
+    .black-keys {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 65%;
+      display: flex;
+      pointer-events: none;
+    }
+    .key-black-slot {
+      flex: 1;
+      position: relative;
+    }
+    .key-black {
+      position: absolute;
+      right: -14px;
+      width: 28px;
+      height: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0 0 3px 3px;
+      z-index: 2;
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+    .key-black:active { background: #334155; }
+
     .feedback-area {
       min-height: 52px;
       margin-top: 16px;
@@ -250,6 +310,7 @@
       <div class="control-group">
         <label for="mode">出題モード：</label>
         <select id="mode">
+          <option value="free_play">🎹 フリー演奏・確認モード (自由に鳴らす)</option>
           <option value="single_root">🎯 単音ルート当て (単音の音感)</option>
           <option value="chord_type">🎼 コード種類特化 (響きをピックアップ)</option>
           <option value="weakness">🔥 苦手集中モード (間違えた問題を優先)</option>
@@ -291,28 +352,78 @@
       <button class="btn-oct" data-oct="12">+1 Oct (高音)</button>
     </div>
 
-    <div class="score-bar">
+    <div class="score-bar" id="score-bar" style="display:none;">
       <span>出題数: <strong id="question-count">0</strong></span>
       <span>正解: <strong id="correct-count">0</strong></span>
       <span>正答率: <strong id="accuracy">0%</strong></span>
     </div>
 
-    <div class="play-controls">
+    <div class="play-controls" id="quiz-controls" style="display:none;">
       <button id="btn-play-chord" class="btn-sound">🔊 再生する</button>
       <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオ</button>
+    </div>
+
+    <!-- フリー演奏エリア -->
+    <div id="free-play-area">
+      <div class="group-title">ミニ鍵盤（タップして単音を再生）:</div>
+      <div class="piano-keyboard">
+        <div class="white-keys">
+          <div class="key-white" data-note="C">C</div>
+          <div class="key-white" data-note="D">D</div>
+          <div class="key-white" data-note="E">E</div>
+          <div class="key-white" data-note="F">F</div>
+          <div class="key-white" data-note="G">G</div>
+          <div class="key-white" data-note="A">A</div>
+          <div class="key-white" data-note="B">B</div>
+        </div>
+        <div class="black-keys">
+          <div class="key-black-slot"><div class="key-black" data-note="C#">C#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="D#">D#</div></div>
+          <div class="key-black-slot" style="pointer-events:none;"></div> <!-- E-F 間 -->
+          <div class="key-black-slot"><div class="key-black" data-note="F#">F#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="G#">G#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="A#">A#</div></div>
+        </div>
+      </div>
+
+      <div class="group-title">コードを選んで響きを鳴らす:</div>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <select id="free-root-select" style="flex:1;">
+          <option value="C">C</option><option value="C#">C#</option>
+          <option value="D">D</option><option value="D#">D#</option>
+          <option value="E">E</option><option value="F">F</option>
+          <option value="F#">F#</option><option value="G">G</option>
+          <option value="G#">G#</option><option value="A">A</option>
+          <option value="A#">A#</option><option value="B">B</option>
+        </select>
+        <select id="free-type-select" style="flex:2;">
+          <option value="major">Major</option>
+          <option value="minor">minor (m)</option>
+          <option value="dim">diminished (dim)</option>
+          <option value="7">7 (ドミナント)</option>
+          <option value="maj7">M7 (メジャー7th)</option>
+          <option value="m7">m7 (マイナー7th)</option>
+          <option value="mM7">mM7 (マイナーM7th)</option>
+          <option value="aug">aug (オーギュメント)</option>
+          <option value="sus4">sus4</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="btn-free-chord" class="btn-sound">🔊 コードを鳴らす</button>
+        <button id="btn-free-arp" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオ</button>
+      </div>
     </div>
 
     <div class="question-panel" id="question-panel"></div>
     <div class="feedback-area" id="feedback-area"></div>
 
-    <div class="weakness-stats">
+    <div class="weakness-stats" id="weakness-stats-area">
       <span id="weakness-summary">苦手データ: 0 問蓄積</span>
       <button class="btn-reset-stats" id="btn-reset-weakness">蓄積データをリセット</button>
     </div>
   </div>
 
   <script>
-    // --- 音楽データ定義 ---
     const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const BLACK_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#'];
     const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -334,13 +445,10 @@
       'sus4':  { label: 'sus4', intervals: [0, 5, 7] }
     };
 
-    // --- 苦手データ管理 (localStorage) ---
-    // key: "chord_major", "root_C#" などの形式で { attempts, errors } を保存
     const STATS_KEY = 'chord_trainer_weakness_v1';
     function loadStats() {
-      try {
-        return JSON.parse(localStorage.getItem(STATS_KEY)) || {};
-      } catch(e) { return {}; }
+      try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; }
+      catch(e) { return {}; }
     }
     function saveStats(stats) {
       localStorage.setItem(STATS_KEY, JSON.stringify(stats));
@@ -360,7 +468,6 @@
       document.getElementById('weakness-summary').textContent = `苦手データ: 間違い蓄積 ${totalErrors} 回`;
     }
 
-    // --- Web Audio API 合成エンジン ---
     let audioCtx = null;
     let masterGain = null;
     let compressor = null;
@@ -382,9 +489,7 @@
         compressor.connect(masterGain);
         masterGain.connect(audioCtx.destination);
       }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       return audioCtx;
     }
 
@@ -402,31 +507,23 @@
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + p.decay);
-        osc.connect(gain);
-        gain.connect(compressor);
-        osc.start(startTime);
-        osc.stop(startTime + p.decay);
+        osc.connect(gain); gain.connect(compressor);
+        osc.start(startTime); osc.stop(startTime + p.decay);
       });
     }
 
     function playEpianoTone(freq, startTime, duration = 1.8) {
       const ctx = getAudioContext();
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(freq, startTime);
+      const osc1 = ctx.createOscillator(); const osc2 = ctx.createOscillator();
+      const gain1 = ctx.createGain(); const gain2 = ctx.createGain();
+      osc1.type = 'sine'; osc1.frequency.setValueAtTime(freq, startTime);
       gain1.gain.setValueAtTime(0, startTime);
       gain1.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
       gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(freq * 3, startTime);
+      osc2.type = 'triangle'; osc2.frequency.setValueAtTime(freq * 3, startTime);
       gain2.gain.setValueAtTime(0, startTime);
       gain2.gain.linearRampToValueAtTime(0.05, startTime + 0.01);
       gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.35);
-
       osc1.connect(gain1); osc2.connect(gain2);
       gain1.connect(compressor); gain2.connect(compressor);
       osc1.start(startTime); osc2.start(startTime);
@@ -435,13 +532,10 @@
 
     function playPadTone(freq, startTime, duration = 1.5) {
       const ctx = getAudioContext();
-      const osc = ctx.createOscillator();
-      const filter = ctx.createBiquadFilter();
+      const osc = ctx.createOscillator(); const filter = ctx.createBiquadFilter();
       const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, startTime);
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, startTime);
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(freq, startTime);
+      filter.type = 'lowpass'; filter.frequency.setValueAtTime(900, startTime);
       gain.gain.setValueAtTime(0, startTime);
       gain.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
       gain.gain.setValueAtTime(0.12, startTime + duration - 0.2);
@@ -453,10 +547,8 @@
     function playOrganTone(freq, startTime, duration = 1.3) {
       const ctx = getAudioContext();
       [{ mult: 0.5, gain: 0.04 }, { mult: 1.0, gain: 0.12 }, { mult: 2.0, gain: 0.06 }, { mult: 3.0, gain: 0.03 }].forEach(h => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq * h.mult, startTime);
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq * h.mult, startTime);
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(h.gain, startTime + 0.04);
         gain.gain.setValueAtTime(h.gain, startTime + duration - 0.1);
@@ -488,7 +580,6 @@
       });
     }
 
-    // --- ゲーム状態 ---
     let totalQuestions = 0;
     let correctCount = 0;
     let currentQuestion = null;
@@ -496,11 +587,8 @@
 
     let selectedRoot = null;
     let selectedType = null;
-
-    // ピックアップ対象のコード（デフォルトは全選択）
     let activePickedChords = Object.keys(CHORD_DEFS);
 
-    // DOM要素
     const modeSelect = document.getElementById('mode');
     const questionPanel = document.getElementById('question-panel');
     const feedbackArea = document.getElementById('feedback-area');
@@ -509,12 +597,42 @@
     const accuracyEl = document.getElementById('accuracy');
     const btnPlayChord = document.getElementById('btn-play-chord');
     const btnPlayArpeggio = document.getElementById('btn-play-arpeggio');
-
+    const scoreBar = document.getElementById('score-bar');
+    const quizControls = document.getElementById('quiz-controls');
+    const freePlayArea = document.getElementById('free-play-area');
     const singleRootSettings = document.getElementById('single-root-settings');
     const chordPickSettings = document.getElementById('chord-pick-settings');
     const chordCheckboxesEl = document.getElementById('chord-checkboxes');
 
-    // チェックボックスUIの初期構築
+    // 鍵盤クリックイベント
+    document.querySelectorAll('.key-white, .key-black').forEach(keyEl => {
+      keyEl.addEventListener('click', () => {
+        const noteName = keyEl.dataset.note;
+        if (noteName) {
+          const midi = 48 + NOTE_OFFSETS[noteName];
+          playSoundSequence([midi], false);
+        }
+      });
+    });
+
+    // フリーコード再生ボタン
+    document.getElementById('btn-free-chord').addEventListener('click', () => {
+      playSelectedFreeChord(false);
+    });
+    document.getElementById('btn-free-arp').addEventListener('click', () => {
+      playSelectedFreeChord(true);
+    });
+
+    function playSelectedFreeChord(arpeggio) {
+      const root = document.getElementById('free-root-select').value;
+      const type = document.getElementById('free-type-select').value;
+      const baseMidi = 48 + NOTE_OFFSETS[root];
+      const intervals = CHORD_DEFS[type].intervals;
+      const midiNotes = intervals.map(i => baseMidi + i);
+      playSoundSequence(midiNotes, arpeggio);
+    }
+
+    // チェックボックス構築
     Object.keys(CHORD_DEFS).forEach(k => {
       const label = document.createElement('label');
       label.className = 'checkbox-item';
@@ -522,41 +640,52 @@
       label.querySelector('input').addEventListener('change', () => {
         const checked = Array.from(chordCheckboxesEl.querySelectorAll('input:checked')).map(el => el.value);
         if (checked.length === 0) {
-          label.querySelector('input').checked = true; // 最低1つ選択
+          label.querySelector('input').checked = true;
           return;
         }
         activePickedChords = checked;
-        generateQuestion();
+        if (modeSelect.value === 'chord_type') generateQuestion();
       });
       chordCheckboxesEl.appendChild(label);
     });
 
-    // オクターブ切り替え
     document.querySelectorAll('.btn-oct').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.btn-oct').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         octaveOffset = parseInt(btn.dataset.oct, 10);
-        if (currentQuestion && !answered) playSoundSequence(currentQuestion.midiNotes, false);
+        if (currentQuestion && !answered && modeSelect.value !== 'free_play') {
+          playSoundSequence(currentQuestion.midiNotes, false);
+        }
       });
     });
 
-    // 単音モードのラジオボタン
     document.querySelectorAll('input[name="root_range"]').forEach(radio => {
       radio.addEventListener('change', () => generateQuestion());
     });
 
-    // モード切替
     modeSelect.addEventListener('change', () => {
       const mode = modeSelect.value;
+      const isFree = (mode === 'free_play');
+
+      freePlayArea.style.display = isFree ? 'block' : 'none';
+      scoreBar.style.display = isFree ? 'none' : 'flex';
+      quizControls.style.display = isFree ? 'none' : 'flex';
+      questionPanel.style.display = isFree ? 'none' : 'block';
+      feedbackArea.style.display = isFree ? 'none' : 'flex';
+
       singleRootSettings.style.display = (mode === 'single_root') ? 'block' : 'none';
       chordPickSettings.style.display = (mode === 'chord_type') ? 'block' : 'none';
       btnPlayArpeggio.style.display = (mode === 'single_root') ? 'none' : 'flex';
       btnPlayChord.textContent = (mode === 'single_root') ? '🔊 単音を鳴らす' : '🔊 和音を鳴らす';
-      generateQuestion();
+
+      if (!isFree) {
+        generateQuestion();
+      } else {
+        currentQuestion = null;
+      }
     });
 
-    // リセットボタン
     document.getElementById('btn-reset-weakness').addEventListener('click', () => {
       if (confirm('蓄積された苦手データを消去してリセットしますか？')) {
         saveStats({});
@@ -581,13 +710,13 @@
       accuracyEl.textContent = `${rate}%`;
     }
 
-    // --- 問題生成 ---
     function generateQuestion() {
       answered = false;
       selectedRoot = null;
       selectedType = null;
       feedbackArea.innerHTML = '';
       const mode = modeSelect.value;
+      if (mode === 'free_play') return;
 
       let rootNoteName = 'C';
       let typeKey = 'major';
@@ -609,7 +738,6 @@
           midiNotes: [48 + NOTE_OFFSETS[rootNoteName]]
         };
       } else if (mode === 'chord_type') {
-        // キーは白鍵ランダム、コード種類は選択されたものから出題
         rootNoteName = WHITE_NOTES[Math.floor(Math.random() * WHITE_NOTES.length)];
         typeKey = activePickedChords[Math.floor(Math.random() * activePickedChords.length)];
         const chordDef = CHORD_DEFS[typeKey];
@@ -625,16 +753,13 @@
           midiNotes: chordDef.intervals.map(i => baseMidi + i)
         };
       } else if (mode === 'weakness') {
-        // 間違いの多いデータを優先抽出
         const stats = loadStats();
         const candidateKeys = Object.keys(stats).filter(k => stats[k].errors > 0);
 
         if (candidateKeys.length === 0) {
-          // 苦手データがない場合は通常出題
           rootNoteName = ALL_NOTES[Math.floor(Math.random() * ALL_NOTES.length)];
           typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
         } else {
-          // 間違い回数で重み付け
           let pool = [];
           candidateKeys.forEach(k => {
             const count = Math.min(stats[k].errors, 10);
@@ -673,7 +798,6 @@
           };
         }
       } else {
-        // full_natural または full_all
         const pool = (mode === 'full_natural') ? WHITE_NOTES : ALL_NOTES;
         rootNoteName = pool[Math.floor(Math.random() * pool.length)];
         typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
@@ -696,9 +820,9 @@
       setTimeout(() => playSoundSequence(currentQuestion.midiNotes, false), 150);
     }
 
-    // --- UI描画 ---
     function renderUI() {
       questionPanel.innerHTML = '';
+      if (!currentQuestion) return;
 
       if (currentQuestion.mode === 'single_root') {
         const title = document.createElement('div');
@@ -735,7 +859,6 @@
         questionPanel.appendChild(grid);
 
       } else {
-        // fullモード
         const rootTitle = document.createElement('div');
         rootTitle.className = 'group-title';
         rootTitle.textContent = '1. ルート音を選択:';
@@ -782,7 +905,6 @@
       }
     }
 
-    // --- 正誤判定ロジック ---
     function checkSingleRoot(note, btn) {
       if (answered) return;
       answered = true;
@@ -798,7 +920,7 @@
       } else {
         btn.classList.add('incorrect');
         highlightCorrectButton(currentQuestion.rootName);
-        showFeedback(false, `残念！ 正解は「${currentQuestion.rootName}」でした`);
+        showFeedback(false, `正解は「${currentQuestion.rootName}」でした`);
       }
       updateScoreBar();
     }
@@ -818,7 +940,7 @@
       } else {
         btn.classList.add('incorrect');
         highlightCorrectButton(currentQuestion.typeName);
-        showFeedback(false, `残念！ 正解は「${currentQuestion.rootName} ${currentQuestion.typeName}」でした`);
+        showFeedback(false, `正解は「${currentQuestion.rootName} ${currentQuestion.typeName}」でした`);
       }
       updateScoreBar();
     }
@@ -840,7 +962,7 @@
           correctCount++;
           showFeedback(true, `完全正解！ 「${fullName}」です！`);
         } else {
-          showFeedback(false, `不正解！ 正解は「${fullName}」でした（回答: ${selectedRoot} ${CHORD_DEFS[selectedType].label}）`);
+          showFeedback(false, `正解は「${fullName}」でした`);
         }
         updateScoreBar();
       }
@@ -860,17 +982,14 @@
       document.getElementById('btn-next').onclick = () => generateQuestion();
     }
 
-    // キーボードのスペースキーでも次へ進める快適仕様
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && answered) {
+      if (e.code === 'Space' && answered && modeSelect.value !== 'free_play') {
         e.preventDefault();
         generateQuestion();
       }
     });
 
-    // 初期起動
     updateWeaknessSummary();
-    generateQuestion();
   </script>
 </body>
 </html>
