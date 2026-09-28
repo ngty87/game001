@@ -1,71 +1,995 @@
-:root {
-  --white-key-width: calc(100% / 7);
-  --black-key-width: 38px; /* 画面幅やデザインに合わせて調整可能 */
-}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コード＆音感 トレーニング</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #22c55e;
+      --error: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 640px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      border: 1px solid #334155;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 16px 0;
+      text-align: center;
+      color: var(--accent);
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 500px) {
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .control-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    select {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+    }
 
-.keyboard-container {
-  display: flex;
-  justify-content: center;
-  padding: 20px 0;
-}
+    .sub-settings {
+      background: #0b1120;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      border: 1px dashed #334155;
+      font-size: 0.85rem;
+    }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
 
-.keyboard {
-  position: relative;
-  display: flex;
-  width: 100%;
-  max-width: 560px;
-  height: 180px;
-  user-select: none;
-}
+    .octave-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .btn-oct {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-oct.active {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      border-color: var(--accent);
+    }
 
-/* 白鍵スタイル */
-.key.white {
-  width: var(--white-key-width);
-  height: 100%;
-  background: #ffffff;
-  border: 1px solid #c8d1dc;
-  border-radius: 0 0 6px 6px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 12px;
-  font-weight: bold;
-  color: #1e293b;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
+    .score-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      background: #0f172a;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+    .score-bar strong { color: var(--text); }
 
-/* 黒鍵スタイル */
-.key.black {
-  position: absolute;
-  top: 0;
-  width: var(--black-key-width);
-  height: 60%;
-  background: #111827;
-  border-radius: 0 0 4px 4px;
-  box-sizing: border-box;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 8px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
+    .play-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-sound {
+      flex: 1;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #0f172a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-sound:hover { background: var(--accent-hover); color: #fff; }
 
-/* --- コード再生時の色変化（アクティブ状態） --- */
-/* 白鍵が光るときの色（例: 明るいアクアブルー） */
-.key.white.active {
-  background-color: #38bdf8 !important;
-  color: #ffffff;
-}
+    .group-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 12px 0 6px 0;
+    }
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+      gap: 8px;
+    }
+    .btn-choice {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: var(--text);
+      padding: 10px 4px;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-choice:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #1e293b;
+    }
+    .btn-choice.selected {
+      border-color: var(--accent);
+      background: #0369a1;
+      color: #fff;
+    }
+    .btn-choice.correct {
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      color: #fff !important;
+    }
+    .btn-choice.incorrect {
+      background: var(--error) !important;
+      border-color: var(--error) !important;
+      color: #fff !important;
+    }
 
-/* 黒鍵が光るときの色（例: 濃いめのシアン・ブルー） */
-.key.black.active {
-  background-color: #0284c7 !important;
-  color: #ffffff;
-}
+    /* フリー演奏用キーボード */
+    .piano-keyboard {
+      position: relative;
+      height: 120px;
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      user-select: none;
+    }
+    .white-keys {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+    .key-white {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #94a3b8;
+      border-radius: 0 0 4px 4px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      color: #334155;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .key-white:active { background: #cbd5e1; }
+    .black-keys {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 65%;
+      display: flex;
+      pointer-events: none;
+    }
+    .key-black-slot {
+      flex: 1;
+      position: relative;
+    }
+    .key-black {
+      position: absolute;
+      right: -14px;
+      width: 28px;
+      height: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0 0 3px 3px;
+      z-index: 2;
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+    .key-black:active { background: #334155; }
+
+    .feedback-area {
+      min-height: 52px;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .feedback-success { color: var(--success); }
+    .feedback-error { color: var(--error); }
+    .next-btn {
+      margin-top: 10px;
+      padding: 8px 24px;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 6px;
+      background: #475569;
+      color: #fff;
+      cursor: pointer;
+    }
+    .next-btn:hover { background: #64748b; }
+
+    .weakness-stats {
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #334155;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-reset-stats {
+      background: transparent;
+      border: 1px solid #64748b;
+      color: #94a3b8;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .btn-reset-stats:hover { color: #fff; border-color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>コード＆音感 トレーニング</h1>
+
+    <div class="settings-grid">
+      <div class="control-group">
+        <label for="mode">出題モード：</label>
+        <select id="mode">
+          <option value="free_play">🎹 フリー演奏・確認モード (自由に鳴らす)</option>
+          <option value="single_root">🎯 単音ルート当て (単音の音感)</option>
+          <option value="chord_type">🎼 コード種類特化 (響きをピックアップ)</option>
+          <option value="weakness">🔥 苦手集中モード (間違えた問題を優先)</option>
+          <option value="full_natural">Lv.3 完全当て (ルート白鍵 + 全コード)</option>
+          <option value="full_all">Lv.4 完全マスター (全12キー + 全コード)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="timbre">音色 (楽器)：</label>
+        <select id="timbre">
+          <option value="piano">アコースティックピアノ風</option>
+          <option value="epiano">エレピ風 (Rhodes風・ウォーム)</option>
+          <option value="pad">ソフトシンセパッド (柔らかい持続音)</option>
+          <option value="organ">クリーンオルガン風</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 単音モード用設定 -->
+    <div id="single-root-settings" class="sub-settings" style="display:none;">
+      <strong>ルート音の範囲:</strong>
+      <div style="display:flex; gap:16px; margin-top:6px;">
+        <label><input type="radio" name="root_range" value="white" checked> 白鍵のみ (C〜B)</label>
+        <label><input type="radio" name="root_range" value="black"> 黒鍵のみ (#系)</label>
+        <label><input type="radio" name="root_range" value="all"> 両方 (全12音)</label>
+      </div>
+    </div>
+
+    <!-- コード種類モード用設定 -->
+    <div id="chord-pick-settings" class="sub-settings" style="display:none;">
+      <strong>出題するコードを選択（複数可）:</strong>
+      <div class="checkbox-grid" id="chord-checkboxes"></div>
+    </div>
+
+    <div class="octave-selector">
+      <span>オクターブ設定:</span>
+      <button class="btn-oct" data-oct="-12">-1 Oct (低音)</button>
+      <button class="btn-oct active" data-oct="0">通常 (基準)</button>
+      <button class="btn-oct" data-oct="12">+1 Oct (高音)</button>
+    </div>
+
+    <div class="score-bar" id="score-bar" style="display:none;">
+      <span>出題数: <strong id="question-count">0</strong></span>
+      <span>正解: <strong id="correct-count">0</strong></span>
+      <span>正答率: <strong id="accuracy">0%</strong></span>
+    </div>
+
+    <div class="play-controls" id="quiz-controls" style="display:none;">
+      <button id="btn-play-chord" class="btn-sound">🔊 再生する</button>
+      <button id="btn-play-arpeggio" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオ</button>
+    </div>
+
+    <!-- フリー演奏エリア -->
+    <div id="free-play-area">
+      <div class="group-title">ミニ鍵盤（タップして単音を再生）:</div>
+      <div class="piano-keyboard">
+        <div class="white-keys">
+          <div class="key-white" data-note="C">C</div>
+          <div class="key-white" data-note="D">D</div>
+          <div class="key-white" data-note="E">E</div>
+          <div class="key-white" data-note="F">F</div>
+          <div class="key-white" data-note="G">G</div>
+          <div class="key-white" data-note="A">A</div>
+          <div class="key-white" data-note="B">B</div>
+        </div>
+        <div class="black-keys">
+          <div class="key-black-slot"><div class="key-black" data-note="C#">C#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="D#">D#</div></div>
+          <div class="key-black-slot" style="pointer-events:none;"></div> <!-- E-F 間 -->
+          <div class="key-black-slot"><div class="key-black" data-note="F#">F#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="G#">G#</div></div>
+          <div class="key-black-slot"><div class="key-black" data-note="A#">A#</div></div>
+        </div>
+      </div>
+
+      <div class="group-title">コードを選んで響きを鳴らす:</div>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <select id="free-root-select" style="flex:1;">
+          <option value="C">C</option><option value="C#">C#</option>
+          <option value="D">D</option><option value="D#">D#</option>
+          <option value="E">E</option><option value="F">F</option>
+          <option value="F#">F#</option><option value="G">G</option>
+          <option value="G#">G#</option><option value="A">A</option>
+          <option value="A#">A#</option><option value="B">B</option>
+        </select>
+        <select id="free-type-select" style="flex:2;">
+          <option value="major">Major</option>
+          <option value="minor">minor (m)</option>
+          <option value="dim">diminished (dim)</option>
+          <option value="7">7 (ドミナント)</option>
+          <option value="maj7">M7 (メジャー7th)</option>
+          <option value="m7">m7 (マイナー7th)</option>
+          <option value="mM7">mM7 (マイナーM7th)</option>
+          <option value="aug">aug (オーギュメント)</option>
+          <option value="sus4">sus4</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="btn-free-chord" class="btn-sound">🔊 コードを鳴らす</button>
+        <button id="btn-free-arp" class="btn-sound" style="background:#0284c7; color:#fff;">🎵 アルペジオ</button>
+      </div>
+    </div>
+
+    <div class="question-panel" id="question-panel"></div>
+    <div class="feedback-area" id="feedback-area"></div>
+
+    <div class="weakness-stats" id="weakness-stats-area">
+      <span id="weakness-summary">苦手データ: 0 問蓄積</span>
+      <button class="btn-reset-stats" id="btn-reset-weakness">蓄積データをリセット</button>
+    </div>
+  </div>
+
+  <script>
+    const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const BLACK_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#'];
+    const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    const NOTE_OFFSETS = {
+      'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+      'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    };
+
+    const CHORD_DEFS = {
+      'major': { label: 'Major', intervals: [0, 4, 7] },
+      'minor': { label: 'minor (m)', intervals: [0, 3, 7] },
+      'dim':   { label: 'diminished (dim)', intervals: [0, 3, 6] },
+      '7':     { label: '7 (ドミナント)', intervals: [0, 4, 7, 10] },
+      'maj7':  { label: 'M7 (メジャー7th)', intervals: [0, 4, 7, 11] },
+      'm7':    { label: 'm7 (マイナー7th)', intervals: [0, 3, 7, 10] },
+      'mM7':   { label: 'mM7 (マイナーM7th)', intervals: [0, 3, 7, 11] },
+      'aug':   { label: 'aug (オーギュメント)', intervals: [0, 4, 8] },
+      'sus4':  { label: 'sus4', intervals: [0, 5, 7] }
+    };
+
+    const STATS_KEY = 'chord_trainer_weakness_v1';
+    function loadStats() {
+      try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; }
+      catch(e) { return {}; }
+    }
+    function saveStats(stats) {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+      updateWeaknessSummary();
+    }
+    function recordAnswer(key, isCorrect) {
+      const stats = loadStats();
+      if (!stats[key]) stats[key] = { attempts: 0, errors: 0 };
+      stats[key].attempts++;
+      if (!isCorrect) stats[key].errors++;
+      saveStats(stats);
+    }
+    function updateWeaknessSummary() {
+      const stats = loadStats();
+      let totalErrors = 0;
+      Object.keys(stats).forEach(k => totalErrors += stats[k].errors || 0);
+      document.getElementById('weakness-summary').textContent = `苦手データ: 間違い蓄積 ${totalErrors} 回`;
+    }
+
+    let audioCtx = null;
+    let masterGain = null;
+    let compressor = null;
+    let octaveOffset = 0;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-12, audioCtx.currentTime);
+        compressor.knee.setValueAtTime(8, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+        compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+        compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+
+        compressor.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function midiToFreq(midiNote) {
+      return 440 * Math.pow(2, (midiNote - 69) / 12);
+    }
+
+    function playPianoTone(freq, startTime, duration = 1.6) {
+      const ctx = getAudioContext();
+      [{ mult: 1, gain: 0.18, decay: duration }, { mult: 2, gain: 0.08, decay: duration * 0.7 }, { mult: 3, gain: 0.04, decay: duration * 0.5 }].forEach(p => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq * p.mult, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + p.decay);
+        osc.connect(gain); gain.connect(compressor);
+        osc.start(startTime); osc.stop(startTime + p.decay);
+      });
+    }
+
+    function playEpianoTone(freq, startTime, duration = 1.8) {
+      const ctx = getAudioContext();
+      const osc1 = ctx.createOscillator(); const osc2 = ctx.createOscillator();
+      const gain1 = ctx.createGain(); const gain2 = ctx.createGain();
+      osc1.type = 'sine'; osc1.frequency.setValueAtTime(freq, startTime);
+      gain1.gain.setValueAtTime(0, startTime);
+      gain1.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      osc2.type = 'triangle'; osc2.frequency.setValueAtTime(freq * 3, startTime);
+      gain2.gain.setValueAtTime(0, startTime);
+      gain2.gain.linearRampToValueAtTime(0.05, startTime + 0.01);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.35);
+      osc1.connect(gain1); osc2.connect(gain2);
+      gain1.connect(compressor); gain2.connect(compressor);
+      osc1.start(startTime); osc2.start(startTime);
+      osc1.stop(startTime + duration); osc2.stop(startTime + duration);
+    }
+
+    function playPadTone(freq, startTime, duration = 1.5) {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator(); const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(freq, startTime);
+      filter.type = 'lowpass'; filter.frequency.setValueAtTime(900, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
+      gain.gain.setValueAtTime(0.12, startTime + duration - 0.2);
+      gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+      osc.connect(filter); filter.connect(gain); gain.connect(compressor);
+      osc.start(startTime); osc.stop(startTime + duration);
+    }
+
+    function playOrganTone(freq, startTime, duration = 1.3) {
+      const ctx = getAudioContext();
+      [{ mult: 0.5, gain: 0.04 }, { mult: 1.0, gain: 0.12 }, { mult: 2.0, gain: 0.06 }, { mult: 3.0, gain: 0.03 }].forEach(h => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq * h.mult, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(h.gain, startTime + 0.04);
+        gain.gain.setValueAtTime(h.gain, startTime + duration - 0.1);
+        gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+        osc.connect(gain); gain.connect(compressor);
+        osc.start(startTime); osc.stop(startTime + duration);
+      });
+    }
+
+    function playNote(freq, startTime, duration) {
+      const timbre = document.getElementById('timbre').value;
+      if (timbre === 'epiano') playEpianoTone(freq, startTime, duration);
+      else if (timbre === 'pad') playPadTone(freq, startTime, duration);
+      else if (timbre === 'organ') playOrganTone(freq, startTime, duration);
+      else playPianoTone(freq, startTime, duration);
+    }
+
+    function playSoundSequence(midiNotes, arpeggio = false) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime + 0.03;
+      const timbre = document.getElementById('timbre').value;
+      const baseDuration = (timbre === 'organ' || timbre === 'pad') ? 1.3 : 1.6;
+
+      midiNotes.forEach((note, idx) => {
+        const shiftedNote = note + octaveOffset;
+        const start = arpeggio ? now + (idx * 0.16) : now;
+        const dur = arpeggio ? 0.9 : baseDuration;
+        playNote(midiToFreq(shiftedNote), start, dur);
+      });
+    }
+
+    let totalQuestions = 0;
+    let correctCount = 0;
+    let currentQuestion = null;
+    let answered = false;
+
+    let selectedRoot = null;
+    let selectedType = null;
+    let activePickedChords = Object.keys(CHORD_DEFS);
+
+    const modeSelect = document.getElementById('mode');
+    const questionPanel = document.getElementById('question-panel');
+    const feedbackArea = document.getElementById('feedback-area');
+    const questionCountEl = document.getElementById('question-count');
+    const correctCountEl = document.getElementById('correct-count');
+    const accuracyEl = document.getElementById('accuracy');
+    const btnPlayChord = document.getElementById('btn-play-chord');
+    const btnPlayArpeggio = document.getElementById('btn-play-arpeggio');
+    const scoreBar = document.getElementById('score-bar');
+    const quizControls = document.getElementById('quiz-controls');
+    const freePlayArea = document.getElementById('free-play-area');
+    const singleRootSettings = document.getElementById('single-root-settings');
+    const chordPickSettings = document.getElementById('chord-pick-settings');
+    const chordCheckboxesEl = document.getElementById('chord-checkboxes');
+
+    // 鍵盤クリックイベント
+    document.querySelectorAll('.key-white, .key-black').forEach(keyEl => {
+      keyEl.addEventListener('click', () => {
+        const noteName = keyEl.dataset.note;
+        if (noteName) {
+          const midi = 48 + NOTE_OFFSETS[noteName];
+          playSoundSequence([midi], false);
+        }
+      });
+    });
+
+    // フリーコード再生ボタン
+    document.getElementById('btn-free-chord').addEventListener('click', () => {
+      playSelectedFreeChord(false);
+    });
+    document.getElementById('btn-free-arp').addEventListener('click', () => {
+      playSelectedFreeChord(true);
+    });
+
+    function playSelectedFreeChord(arpeggio) {
+      const root = document.getElementById('free-root-select').value;
+      const type = document.getElementById('free-type-select').value;
+      const baseMidi = 48 + NOTE_OFFSETS[root];
+      const intervals = CHORD_DEFS[type].intervals;
+      const midiNotes = intervals.map(i => baseMidi + i);
+      playSoundSequence(midiNotes, arpeggio);
+    }
+
+    // チェックボックス構築
+    Object.keys(CHORD_DEFS).forEach(k => {
+      const label = document.createElement('label');
+      label.className = 'checkbox-item';
+      label.innerHTML = `<input type="checkbox" value="${k}" checked> ${CHORD_DEFS[k].label}`;
+      label.querySelector('input').addEventListener('change', () => {
+        const checked = Array.from(chordCheckboxesEl.querySelectorAll('input:checked')).map(el => el.value);
+        if (checked.length === 0) {
+          label.querySelector('input').checked = true;
+          return;
+        }
+        activePickedChords = checked;
+        if (modeSelect.value === 'chord_type') generateQuestion();
+      });
+      chordCheckboxesEl.appendChild(label);
+    });
+
+    document.querySelectorAll('.btn-oct').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-oct').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        octaveOffset = parseInt(btn.dataset.oct, 10);
+        if (currentQuestion && !answered && modeSelect.value !== 'free_play') {
+          playSoundSequence(currentQuestion.midiNotes, false);
+        }
+      });
+    });
+
+    document.querySelectorAll('input[name="root_range"]').forEach(radio => {
+      radio.addEventListener('change', () => generateQuestion());
+    });
+
+    modeSelect.addEventListener('change', () => {
+      const mode = modeSelect.value;
+      const isFree = (mode === 'free_play');
+
+      freePlayArea.style.display = isFree ? 'block' : 'none';
+      scoreBar.style.display = isFree ? 'none' : 'flex';
+      quizControls.style.display = isFree ? 'none' : 'flex';
+      questionPanel.style.display = isFree ? 'none' : 'block';
+      feedbackArea.style.display = isFree ? 'none' : 'flex';
+
+      singleRootSettings.style.display = (mode === 'single_root') ? 'block' : 'none';
+      chordPickSettings.style.display = (mode === 'chord_type') ? 'block' : 'none';
+      btnPlayArpeggio.style.display = (mode === 'single_root') ? 'none' : 'flex';
+      btnPlayChord.textContent = (mode === 'single_root') ? '🔊 単音を鳴らす' : '🔊 和音を鳴らす';
+
+      if (!isFree) {
+        generateQuestion();
+      } else {
+        currentQuestion = null;
+      }
+    });
+
+    document.getElementById('btn-reset-weakness').addEventListener('click', () => {
+      if (confirm('蓄積された苦手データを消去してリセットしますか？')) {
+        saveStats({});
+        alert('リセットしました');
+        if (modeSelect.value === 'weakness') generateQuestion();
+      }
+    });
+
+    btnPlayChord.addEventListener('click', () => {
+      if (currentQuestion) playSoundSequence(currentQuestion.midiNotes, false);
+    });
+    btnPlayArpeggio.addEventListener('click', () => {
+      if (currentQuestion && modeSelect.value !== 'single_root') {
+        playSoundSequence(currentQuestion.midiNotes, true);
+      }
+    });
+
+    function updateScoreBar() {
+      questionCountEl.textContent = totalQuestions;
+      correctCountEl.textContent = correctCount;
+      const rate = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+      accuracyEl.textContent = `${rate}%`;
+    }
+
+    function generateQuestion() {
+      answered = false;
+      selectedRoot = null;
+      selectedType = null;
+      feedbackArea.innerHTML = '';
+      const mode = modeSelect.value;
+      if (mode === 'free_play') return;
+
+      let rootNoteName = 'C';
+      let typeKey = 'major';
+      let isSingleNote = false;
+
+      if (mode === 'single_root') {
+        isSingleNote = true;
+        const range = document.querySelector('input[name="root_range"]:checked').value;
+        let pool = WHITE_NOTES;
+        if (range === 'black') pool = BLACK_NOTES;
+        else if (range === 'all') pool = ALL_NOTES;
+        rootNoteName = pool[Math.floor(Math.random() * pool.length)];
+
+        currentQuestion = {
+          mode: 'single_root',
+          statKey: `root_${rootNoteName}`,
+          rootName: rootNoteName,
+          pool: pool,
+          midiNotes: [48 + NOTE_OFFSETS[rootNoteName]]
+        };
+      } else if (mode === 'chord_type') {
+        rootNoteName = WHITE_NOTES[Math.floor(Math.random() * WHITE_NOTES.length)];
+        typeKey = activePickedChords[Math.floor(Math.random() * activePickedChords.length)];
+        const chordDef = CHORD_DEFS[typeKey];
+        const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+
+        currentQuestion = {
+          mode: 'chord_type',
+          statKey: `chord_${typeKey}`,
+          typeKey: typeKey,
+          typeName: chordDef.label,
+          rootName: rootNoteName,
+          pool: activePickedChords,
+          midiNotes: chordDef.intervals.map(i => baseMidi + i)
+        };
+      } else if (mode === 'weakness') {
+        const stats = loadStats();
+        const candidateKeys = Object.keys(stats).filter(k => stats[k].errors > 0);
+
+        if (candidateKeys.length === 0) {
+          rootNoteName = ALL_NOTES[Math.floor(Math.random() * ALL_NOTES.length)];
+          typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
+        } else {
+          let pool = [];
+          candidateKeys.forEach(k => {
+            const count = Math.min(stats[k].errors, 10);
+            for (let i = 0; i < count; i++) pool.push(k);
+          });
+          const pickedKey = pool[Math.floor(Math.random() * pool.length)];
+
+          if (pickedKey.startsWith('root_')) {
+            isSingleNote = true;
+            rootNoteName = pickedKey.replace('root_', '');
+          } else {
+            typeKey = pickedKey.replace('chord_', '');
+            rootNoteName = WHITE_NOTES[Math.floor(Math.random() * WHITE_NOTES.length)];
+          }
+        }
+
+        if (isSingleNote) {
+          currentQuestion = {
+            mode: 'single_root',
+            statKey: `root_${rootNoteName}`,
+            rootName: rootNoteName,
+            pool: ALL_NOTES,
+            midiNotes: [48 + NOTE_OFFSETS[rootNoteName]]
+          };
+        } else {
+          const chordDef = CHORD_DEFS[typeKey];
+          const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+          currentQuestion = {
+            mode: 'chord_type',
+            statKey: `chord_${typeKey}`,
+            typeKey: typeKey,
+            typeName: chordDef.label,
+            rootName: rootNoteName,
+            pool: Object.keys(CHORD_DEFS),
+            midiNotes: chordDef.intervals.map(i => baseMidi + i)
+          };
+        }
+      } else {
+        const pool = (mode === 'full_natural') ? WHITE_NOTES : ALL_NOTES;
+        rootNoteName = pool[Math.floor(Math.random() * pool.length)];
+        typeKey = Object.keys(CHORD_DEFS)[Math.floor(Math.random() * Object.keys(CHORD_DEFS).length)];
+        const chordDef = CHORD_DEFS[typeKey];
+        const baseMidi = 48 + NOTE_OFFSETS[rootNoteName];
+
+        currentQuestion = {
+          mode: 'full',
+          statKeyChord: `chord_${typeKey}`,
+          statKeyRoot: `root_${rootNoteName}`,
+          typeKey: typeKey,
+          typeName: chordDef.label,
+          rootName: rootNoteName,
+          poolRoots: pool,
+          midiNotes: chordDef.intervals.map(i => baseMidi + i)
+        };
+      }
+
+      renderUI();
+      setTimeout(() => playSoundSequence(currentQuestion.midiNotes, false), 150);
+    }
+
+    function renderUI() {
+      questionPanel.innerHTML = '';
+      if (!currentQuestion) return;
+
+      if (currentQuestion.mode === 'single_root') {
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = '鳴っている単音の音名を選択:';
+        questionPanel.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'choices-grid';
+        currentQuestion.pool.forEach(note => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = note;
+          btn.onclick = () => checkSingleRoot(note, btn);
+          grid.appendChild(btn);
+        });
+        questionPanel.appendChild(grid);
+
+      } else if (currentQuestion.mode === 'chord_type') {
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = 'コードの響き（種類）を選択:';
+        questionPanel.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'choices-grid';
+        currentQuestion.pool.forEach(k => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = CHORD_DEFS[k].label;
+          btn.onclick = () => checkChordType(k, btn);
+          grid.appendChild(btn);
+        });
+        questionPanel.appendChild(grid);
+
+      } else {
+        const rootTitle = document.createElement('div');
+        rootTitle.className = 'group-title';
+        rootTitle.textContent = '1. ルート音を選択:';
+        questionPanel.appendChild(rootTitle);
+
+        const rootGrid = document.createElement('div');
+        rootGrid.className = 'choices-grid';
+        currentQuestion.poolRoots.forEach(note => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = note;
+          btn.onclick = () => {
+            if (answered) return;
+            rootGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedRoot = note;
+            checkFullAnswer();
+          };
+          rootGrid.appendChild(btn);
+        });
+        questionPanel.appendChild(rootGrid);
+
+        const typeTitle = document.createElement('div');
+        typeTitle.className = 'group-title';
+        typeTitle.textContent = '2. コードの響きを選択:';
+        questionPanel.appendChild(typeTitle);
+
+        const typeGrid = document.createElement('div');
+        typeGrid.className = 'choices-grid';
+        Object.keys(CHORD_DEFS).forEach(k => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-choice';
+          btn.textContent = CHORD_DEFS[k].label;
+          btn.onclick = () => {
+            if (answered) return;
+            typeGrid.querySelectorAll('.btn-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedType = k;
+            checkFullAnswer();
+          };
+          typeGrid.appendChild(btn);
+        });
+        questionPanel.appendChild(typeGrid);
+      }
+    }
+
+    function checkSingleRoot(note, btn) {
+      if (answered) return;
+      answered = true;
+      totalQuestions++;
+
+      const isCorrect = (note === currentQuestion.rootName);
+      recordAnswer(currentQuestion.statKey, isCorrect);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
+        showFeedback(true, `正解！ 「${currentQuestion.rootName}」の音です`);
+      } else {
+        btn.classList.add('incorrect');
+        highlightCorrectButton(currentQuestion.rootName);
+        showFeedback(false, `正解は「${currentQuestion.rootName}」でした`);
+      }
+      updateScoreBar();
+    }
+
+    function checkChordType(selectedKey, btn) {
+      if (answered) return;
+      answered = true;
+      totalQuestions++;
+
+      const isCorrect = (selectedKey === currentQuestion.typeKey);
+      recordAnswer(currentQuestion.statKey, isCorrect);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
+        showFeedback(true, `正解！ (${currentQuestion.rootName} ${currentQuestion.typeName})`);
+      } else {
+        btn.classList.add('incorrect');
+        highlightCorrectButton(currentQuestion.typeName);
+        showFeedback(false, `正解は「${currentQuestion.rootName} ${currentQuestion.typeName}」でした`);
+      }
+      updateScoreBar();
+    }
+
+    function checkFullAnswer() {
+      if (selectedRoot && selectedType && !answered) {
+        answered = true;
+        totalQuestions++;
+
+        const isCorrectRoot = (selectedRoot === currentQuestion.rootName);
+        const isCorrectType = (selectedType === currentQuestion.typeKey);
+        const isCorrect = isCorrectRoot && isCorrectType;
+
+        recordAnswer(currentQuestion.statKeyRoot, isCorrectRoot);
+        recordAnswer(currentQuestion.statKeyChord, isCorrectType);
+
+        const fullName = `${currentQuestion.rootName} ${currentQuestion.typeName}`;
+        if (isCorrect) {
+          correctCount++;
+          showFeedback(true, `完全正解！ 「${fullName}」です！`);
+        } else {
+          showFeedback(false, `正解は「${fullName}」でした`);
+        }
+        updateScoreBar();
+      }
+    }
+
+    function highlightCorrectButton(text) {
+      questionPanel.querySelectorAll('.btn-choice').forEach(b => {
+        if (b.textContent === text) b.classList.add('correct');
+      });
+    }
+
+    function showFeedback(isSuccess, message) {
+      feedbackArea.innerHTML = `
+        <div class="${isSuccess ? 'feedback-success' : 'feedback-error'}">${message}</div>
+        <button class="next-btn" id="btn-next">次の問題へ (スペースキーでも可)</button>
+      `;
+      document.getElementById('btn-next').onclick = () => generateQuestion();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && answered && modeSelect.value !== 'free_play') {
+        e.preventDefault();
+        generateQuestion();
+      }
+    });
+
+    updateWeaknessSummary();
+  </script>
+</body>
+</html>
